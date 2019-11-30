@@ -26,7 +26,8 @@ Data that we need: <br>
 ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/NA12878/CompleteGenomics_normal/BAM/
 
 Reference Sequences: <br>
-ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz <br>
+Additional information: https://lh3.github.io/2017/11/13/which-human-reference-genome-to-use
 
 # Resources
 viHMM in Matlab: https://github.com/tangmanhd/vi-HMM
