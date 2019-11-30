@@ -19,7 +19,11 @@ Implementation of Hidden Markov Model (Viterbi) algorithm for the identification
 
 
 # Data
+General info
 ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/
+
+Data that we need:
+ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/NA12878/CompleteGenomics_normal/BAM/
 
 # Resources
 viHMM in Matlab: https://github.com/tangmanhd/vi-HMM
