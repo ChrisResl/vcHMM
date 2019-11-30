@@ -18,5 +18,9 @@ Implementation of Hidden Markov Model (Viterbi) algorithm for the identification
 |Presentation                      |            | 20.01.2020 |<ul><li>- [ ] </li></ul> |
 
 
+# Data
+ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/
+
 # Resources
 viHMM in Matlab: https://github.com/tangmanhd/vi-HMM
+
