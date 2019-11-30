@@ -10,7 +10,7 @@ def get_sam():
     samdict = {}
     for read in samfile:
         samdict[read.query_name] = [read.reference_start,
-                                    read.query_sequence, read.cigarstring, read.mapping_quality, read.query_qualities]
+                                    read.query_sequence, read.cigartuples, read.mapping_quality, read.query_qualities]
     return samdict
 
 
