@@ -27,9 +27,9 @@ def get_sam(samfile):
     return sam
 
 
-def update_reads(sam):
+def get_cigar(sam):
     """
-    This code gets the cut out the hard and soft clipped entries from read sequence and/or cigar string
+    This code cuts out the hard and soft clipped entries from read sequence and/or cigar string
     and gets the insertion- and deletion positions to update reads and query qualities
     """
     insertions = []
@@ -63,24 +63,11 @@ def update_reads(sam):
                 insertions.append((read[0] + pos, operation[1], read[1]))
             elif operation[0] == 2:
                 # Deletion: gaps in reads einfügen und in liste speichern für folgende reads
-                # insert insertion of one read into the other ones
                 updated_read = read[2][: pos] + \
                     operation[1] * '-' + read[2][pos:]
                 read = [read[0], read[1], updated_read,
                         read[3], read[4], read[5]]
             pos += operation[1]
-        for insert in insertions:
-            # insert insertiongaps into reads and into query quality
-            if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
-                # print('here')
-                gapped_read = read[2][:insert[0] - read[0]] + \
-                    insert[1] * '-' + read[2][insert[0] - read[0]:]
-                # print(read[2])
-                changed_qual = read[5][:insert[0] - read[0]] + \
-                    insert[1] * [255] + read[5][insert[0] - read[0]:]
-                # print(changed_qual)
-                read = [read[0], read[1], gapped_read,
-                        read[3], read[4], changed_qual]
     return sam, insertions
 
 
@@ -96,24 +83,41 @@ def del_duplicate_ins(insertions):
     return unique_inserts
 
 
+def update_reads(sam, insertions):
+    for read in sam:
+        for insert in insertions:
+            # print(insert)
+            # insert insertiongaps into reads and into query quality
+            if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
+                print('here')
+                gapped_read = read[2][:insert[0] - read[0]] + \
+                    insert[1] * '-' + read[2][insert[0] - read[0]:]
+                changed_qual = read[5][:insert[0] - read[0]] + \
+                    insert[1] * [255] + read[5][insert[0] - read[0]:]
+                # print(changed_qual)
+                read = [read[0], read[1], gapped_read,
+                        read[3], read[4], changed_qual]
+                # print(read[2])
+    return sam
+
+
 def update_ref(ref_seq, insertions):
     """
     insertion of gaps into reference sequence
     """
-    for ins in insertions:
-        ref_seq = ref_seq[:ins[0]] + ins[1] * '-' + ref_seq[ins[0]:]
+    for insert in insertions:
+        ref_seq = ref_seq[:insert[0]] + insert[1] * '-' + ref_seq[insert[0]:]
     return ref_seq
 
 
 def main():
     sam = get_sam('data/example.sam')
     ref_seq = get_ref_fasta('data/ref.fa')
-    updated_sam, insertions = update_reads(sam)
+    sam_with_dels, insertions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
+    updated_sam = update_reads(sam_with_dels, unique_inserts)
     updated_refseq = update_ref(ref_seq, unique_inserts)
     # print(updated_refseq)
-    # for read in updated_sam:
-    #   print(read[5])
 
 
 if __name__ == '__main__':
