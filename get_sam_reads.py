@@ -105,8 +105,9 @@ def update_ref(ref_seq, insertions):
     """
     insertion of gaps into reference sequence
     """
+    temp = 0
     for insert in insertions:
-        ref_seq = ref_seq[:insert[0]] + insert[1] * '-' + ref_seq[insert[0]:]
+        ref_seq = ref_seq[:(insert[0]+temp)] + insert[1] * '-' + ref_seq[(insert[0]+temp):]
     return ref_seq
 
 
