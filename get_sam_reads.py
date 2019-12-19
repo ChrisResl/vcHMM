@@ -84,11 +84,9 @@ def del_duplicate_ins(insertions):
 
 
 def update_insertions(insertions):
-    temp = 0
     inserts = []
     for insert in insertions:
-        inserts.append([insert[0] + temp, insert[1], insert[2]])
-        temp += insert[1]
+        inserts.append([insert[0], insert[1], insert[2]])
     return inserts
 
 
@@ -114,7 +112,8 @@ def update_ref(ref_seq, insertions):
     """
     temp = 0
     for insert in insertions:
-        ref_seq = ref_seq[:(insert[0]+temp)] + insert[1] * '-' + ref_seq[(insert[0]+temp):]
+        ref_seq = ref_seq[:(insert[0] + temp)] + insert[1] * \
+            '-' + ref_seq[(insert[0] + temp):]
     return ref_seq
 
 
