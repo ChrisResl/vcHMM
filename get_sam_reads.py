@@ -60,7 +60,7 @@ def get_cigar(sam):
                             read[3][:-1], read[4], read[5]]
             elif operation[0] == 1:
                 # Insertion: save position, length and readname into insertion list
-                insertions.append((read[0] + pos, operation[1], read[1]))
+                insertions.append([read[0] + pos, operation[1], read[1]])
             elif operation[0] == 2:
                 # Deletion: gaps in reads einfügen und in liste speichern für folgende reads
                 updated_read = read[2][: pos] + \
@@ -83,22 +83,29 @@ def del_duplicate_ins(insertions):
     return unique_inserts
 
 
+def update_insertions(insertions):
+    temp = 0
+    inserts = []
+    for insert in insertions:
+        inserts.append([insert[0] + temp, insert[1], insert[2]])
+        temp += insert[1]
+    return inserts
+
+
 def update_reads(sam, insertions):
+    newsam = []
     for read in sam:
         for insert in insertions:
-            # print(insert)
             # insert insertiongaps into reads and into query quality
             if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
-                print('here')
                 gapped_read = read[2][:insert[0] - read[0]] + \
                     insert[1] * '-' + read[2][insert[0] - read[0]:]
                 changed_qual = read[5][:insert[0] - read[0]] + \
                     insert[1] * [255] + read[5][insert[0] - read[0]:]
-                # print(changed_qual)
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
-                # print(read[2])
-    return sam
+        newsam.append(read)
+    return newsam
 
 
 def update_ref(ref_seq, insertions):
@@ -115,8 +122,12 @@ def main():
     ref_seq = get_ref_fasta('data/ref.fa')
     sam_with_dels, insertions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
-    updated_sam = update_reads(sam_with_dels, unique_inserts)
-    updated_refseq = update_ref(ref_seq, unique_inserts)
+    upd_inserts = update_insertions(unique_inserts)
+    updated_sam = update_reads(sam_with_dels, upd_inserts)
+    for read in updated_sam:
+        if read[0] == 197:
+            print(read)
+    updated_refseq = update_ref(ref_seq, upd_inserts)
     # print(updated_refseq)
 
 
