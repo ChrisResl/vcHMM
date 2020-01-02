@@ -33,6 +33,7 @@ def get_cigar(sam):
     and gets the insertion- and deletion positions to update reads and query qualities
     """
     insertions = []
+    deletions = []
     for read in sam:
         soft_at_beginning = True
         hard_at_beginning = True
@@ -63,12 +64,9 @@ def get_cigar(sam):
                 insertions.append([read[0] + pos, operation[1], read[1]])
             elif operation[0] == 2:
                 # Deletion: gaps in reads einfügen und in liste speichern für folgende reads
-                updated_read = read[2][: pos] + \
-                    operation[1] * '-' + read[2][pos:]
-                read = [read[0], read[1], updated_read,
-                        read[3], read[4], read[5]]
+                deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
-    return sam, insertions
+    return sam, insertions, deletions
 
 
 def del_duplicate_ins(insertions):
@@ -83,25 +81,30 @@ def del_duplicate_ins(insertions):
     return unique_inserts
 
 
-def update_insertions(insertions):
-    inserts = []
-    for insert in insertions:
-        inserts.append([insert[0], insert[1], insert[2]])
-    return inserts
-
-
-def update_reads(sam, insertions):
+def update_reads(sam, insertions, deletions):
     newsam = []
+    temp = 0
     for read in sam:
         for insert in insertions:
+            temp += insert[1]
+            read = [read[0] + temp, read[1], read[2],                         
+                    read[3], read[4], read[5]]
             # insert insertiongaps into reads and into query quality
-            if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
+            if (read[1] != insert[2]) and (insert[0] + temp > read[0]) and (insert[0] - read[0] < len(read[2])):
                 gapped_read = read[2][:insert[0] - read[0]] + \
                     insert[1] * '-' + read[2][insert[0] - read[0]:]
                 changed_qual = read[5][:insert[0] - read[0]] + \
                     insert[1] * [255] + read[5][insert[0] - read[0]:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
+
+        for delete in deletions:
+            if read[1] == delete[0]:
+                updated_read = read[2][: delete[1]] + \
+                    delete[2] * '-' + read[2][delete[1]:]
+                read = [read[0], read[1], updated_read,
+                        read[3], read[4], read[5]]
+
         newsam.append(read)
     return newsam
 
@@ -120,14 +123,13 @@ def update_ref(ref_seq, insertions):
 def main():
     sam = get_sam('data/example.sam')
     ref_seq = get_ref_fasta('data/ref.fa')
-    sam_with_dels, insertions = get_cigar(sam)
+    newsam, insertions, deletions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
-    upd_inserts = update_insertions(unique_inserts)
-    updated_sam = update_reads(sam_with_dels, upd_inserts)
+    updated_sam = update_reads(newsam, unique_inserts, deletions)
     for read in updated_sam:
-        if read[0] == 197:
+        if read[1] == 'simulated.read45':
             print(read)
-    updated_refseq = update_ref(ref_seq, upd_inserts)
+    updated_refseq = update_ref(ref_seq, unique_inserts)
     # print(updated_refseq)
 
 
