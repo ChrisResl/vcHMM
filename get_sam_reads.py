@@ -83,30 +83,28 @@ def del_duplicate_ins(insertions):
 
 def update_reads(sam, insertions, deletions):
     newsam = []
-    temp = 0
     for read in sam:
         for insert in insertions:
-            temp += insert[1]
-            read = [read[0] + temp, read[1], read[2],                         
-                    read[3], read[4], read[5]]
             # insert insertiongaps into reads and into query quality
-            if (read[1] != insert[2]) and (insert[0] + temp > read[0]) and (insert[0] - read[0] < len(read[2])):
+            if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
                 gapped_read = read[2][:insert[0] - read[0]] + \
                     insert[1] * '-' + read[2][insert[0] - read[0]:]
                 changed_qual = read[5][:insert[0] - read[0]] + \
                     insert[1] * [255] + read[5][insert[0] - read[0]:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
-
+                
+        newsam.append(read)
+    
+    return newsam
+'''
         for delete in deletions:
             if read[1] == delete[0]:
                 updated_read = read[2][: delete[1]] + \
                     delete[2] * '-' + read[2][delete[1]:]
                 read = [read[0], read[1], updated_read,
                         read[3], read[4], read[5]]
-
-        newsam.append(read)
-    return newsam
+'''
 
 
 def update_ref(ref_seq, insertions):
@@ -126,9 +124,11 @@ def main():
     newsam, insertions, deletions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
     updated_sam = update_reads(newsam, unique_inserts, deletions)
+    '''
     for read in updated_sam:
         if read[1] == 'simulated.read45':
             print(read)
+    '''
     updated_refseq = update_ref(ref_seq, unique_inserts)
     # print(updated_refseq)
 
