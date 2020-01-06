@@ -99,30 +99,56 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 temp_list.append("NaN")
 
             # list values else: 3 if-cases fro every element in pile-up
-            for ii in range(15,30):
+            for ii in range(15, 30):
+
+                """
+                Checking: case: if Vector at Gap, Gap and >80% of reads are gaps:
+                """
+                gap_counter = 0
+                for z in range(len(pileup)):
+                    if pileup[z] == "-":
+                        gap_counter = gap_counter + 1
+                if vector[ii-15] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
+                    temp_list.append(0)
+                    continue
+
+                """
+                NaN-Checking: case in vector part ii is no match with any element from pile-up-list
+                """
+                nan_controll = 0
+                for sub in range(len(pileup)):
+                    if vector[ii-15][0] == pileup[sub] or vector[ii-15][1] == pileup[sub]:
+                        nan_controll = 1
+
+                if nan_controll == 0:
+                    temp_list.append("NaN")
+                    continue
+
+                """
+                Loop over vector
+                """
+
                 #set temp_value to zero for every ii-loop
                 temp_value = 0
-                for iii in range(len(pileup)):
-                    if pileup[iii] == "-" and  vector[ii-15][0] == "-" and vector[ii-15][1] == "-":
-                        for subi in range(len(pileup_qual)):
-                            #   log10(1 - 10 ^ (-qscore[subi] / 10))
-                            temp_pow = math.pow(10, (-pileup_qual[subi]/10))
-                            temp = math.log10(1-temp_pow)
-                            temp_value = temp_value + temp
+                for subi in range(len(pileup)):
 
-                    elif pileup[iii] != vector[ii-15][0] and pileup[iii] != vector[ii-15][1]:
-                        for subi in range(len(pileup_qual)):
-                            #   -qscore[subi] / 10 +log10(0.25)
-                            temp = (-pileup_qual[subi] / 10 + math.log10(0.25))
-                            temp_value = temp_value + temp
+                    if vector[ii - 15][0] == pileup[i] and vector[ii - 15][1] == pileup[i]:
+                        #   log10(1 - 10 ^ (-qscore[subi] / 10))
+                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp = math.log10(1 - temp_pow)
+                        temp_value = temp_value + temp
+
+                    elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
+                        #   -qscore[subi] / 10 +log10(0.25)
+                        temp = (-pileup_qual[subi] / 10 + math.log10(0.25))
+                        temp_value = temp_value + temp
 
                     else:
-                        for subi in range(len(pileup_qual)):
-                            #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
-                            temp_pow = math.pow(10, (-pileup_qual[subi]/10))
-                            temp = 0.5*(1-temp_pow) + 0.125*temp_pow
-                            temp_log = math.log10(temp)
-                            temp_value = temp_value + temp_log
+                        #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
+                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
+                        temp_log = math.log10(temp)
+                        temp_value = temp_value + temp_log
 
                 temp_list.append(temp_value)
             ematrix.append(temp_list)
@@ -144,22 +170,48 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
             for ii in range(15):
                 temp_value = 0
-                for iii in range(len(pileup)):
-                    if pileup[iii] == "-" and vector[ii - 15][0] == "-" and vector[ii - 15][1] == "-":
-                        for subi in range(len(pileup_qual)):
+
+                """
+                Checking: case: if Vector at Gap, Gap and >80% of reads are gaps:
+                """
+                gap_counter = 0
+                for z in range(len(pileup)):
+                    if pileup[z] == "-":
+                        gap_counter = gap_counter + 1
+                if vector[ii] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
+                    temp_list.append(0)
+                    continue
+
+
+                """
+                NaN-Checking: case in vector part ii is no match with any element from pile-up-list
+                """
+                nan_controll = 0
+                for sub in  range(len(pileup)):
+                    if vector[ii][0] == pileup[sub] or vector[ii][1] == pileup[sub]:
+                        nan_controll = 1
+
+                if nan_controll == 0:
+                    temp_list.append("NaN")
+                    continue
+
+                """
+                Loop over vector
+                """
+                for subi in range(len(pileup)):
+
+                    if vector[ii - 15][0] == pileup[i] and vector[ii - 15][1] == pileup[i]:
                             #   log10(1 - 10 ^ (-qscore[subi] / 10))
                             temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
                             temp = math.log10(1 - temp_pow)
                             temp_value = temp_value + temp
 
-                    elif pileup[iii] != vector[ii - 15][0] and pileup[iii] != vector[ii - 15][1]:
-                        for subi in range(len(pileup_qual)):
+                    elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                             #   -qscore[subi] / 10 +log10(0.25)
                             temp = (-pileup_qual[subi] / 10 + math.log10(0.25))
                             temp_value = temp_value + temp
 
                     else:
-                        for subi in range(len(pileup_qual)):
                             #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
                             temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
                             temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
@@ -183,3 +235,13 @@ Test-Values for testing emission-matrix
 updated_sam = ""
 updated_reference = "A-GN-"
 build_emissionmatrix(updated_sam, updated_reference)
+
+
+"""
+Test-Values for testing emission-matrix
+"""
+
+updated_sam = ""
+updated_reference = "A-GN-"
+test_ematrix = build_emissionmatrix(updated_sam, updated_reference)
+print("Ematrix ready.")
