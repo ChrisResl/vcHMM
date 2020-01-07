@@ -136,6 +136,17 @@ def update_ref(ref_seq, insertions):
     return ref_seq
 
 
+def get_pileup(samfile, pileupposition):
+    bases = []
+    qualities = []
+    for read in samfile:
+        # print(read)
+        if read[0] < pileupposition and read[0] + len(read[2]) > pileupposition:
+            bases.append(read[2][pileupposition - read[0]])
+            qualities.append(read[5][pileupposition - read[0]])
+    return bases, qualities
+
+
 def main():
     sam = get_sam('data/example.sam')
     ref_seq = get_ref_fasta('data/ref.fa')
@@ -143,13 +154,11 @@ def main():
     unique_inserts = del_duplicate_ins(insertions)
     upd_inserts = update_insertions(unique_inserts)
     updated_sam = update_reads(newsam, upd_inserts, deletions)
-    '''
-    for read in updated_sam:
-        if read[1] == 'simulated.read45':
-            print(read)
-    '''
+    #baselist, qualitieslist = get_pileup(updated_sam, 103)
+    #print(baselist)
+    #print(qualitieslist)
+
     updated_refseq = update_ref(ref_seq, unique_inserts)
-    # print(updated_refseq)
 
 
 if __name__ == '__main__':
