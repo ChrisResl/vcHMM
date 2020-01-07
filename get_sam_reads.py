@@ -4,7 +4,7 @@ from Bio import SeqIO
 
 def get_ref_fasta(file_name):
     """
-    This code reads a fasta-file and return the first sequence.
+    reads a fasta-file and return the first sequence.
     Needs: a full file-name, e.g. : ref.fa
     :return: DNA-Sequence (as String) of a given fasta-file
     """
@@ -14,7 +14,7 @@ def get_ref_fasta(file_name):
 
 def get_sam(samfile):
     """
-    This code reads a sam-file and returns a list with startposition, readnames,
+    reads a sam-file and returns a list with startposition, readnames,
     readsequence, [cigarstring as tuples], [queryqualities].
     return: All sorted reads from given sam-file.
     """
@@ -29,7 +29,7 @@ def get_sam(samfile):
 
 def get_cigar(sam):
     """
-    This code cuts out the hard and soft clipped entries from read sequence and/or cigar string
+    cuts out the hard and soft clipped entries from read sequence and/or cigar string
     and gets the insertion- and deletion positions to update reads and query qualities
     """
     insertions = []
@@ -63,7 +63,7 @@ def get_cigar(sam):
                 # Insertion: save position, length and readname into insertion list
                 insertions.append([read[0] + pos, operation[1], read[1]])
             elif operation[0] == 2:
-                # Deletion: gaps in reads einfügen und in liste speichern für folgende reads
+                # Deletion: save queryname, position and lenght in deletion list
                 deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
     return sam, insertions, deletions
@@ -71,7 +71,7 @@ def get_cigar(sam):
 
 def del_duplicate_ins(insertions):
     """
-    This function deletes all duplicate insertions from insertion list
+    deletes all duplicate insertions from insertion list
     """
     insertions = sorted(insertions)
     unique_inserts = []
@@ -81,10 +81,27 @@ def del_duplicate_ins(insertions):
     return unique_inserts
 
 
+def update_insertions(insertions):
+    """
+    updates startposition of insertions and returns new insertions
+    """
+    temp = 0
+    upd_inserts = []
+    for insert in insertions:
+        insert = [insert[0] + temp, insert[1], insert[2]]
+        temp += insert[1]
+        upd_inserts.append(insert)
+    return sorted(upd_inserts)
+
+
 def update_reads(sam, insertions, deletions):
     newsam = []
     for read in sam:
         for insert in insertions:
+            # change startposition of reads
+            if insert[0] < read[0]:
+                read = [read[0] + insert[1], read[1], read[2],
+                        read[3], read[4], read[5]]
             # insert insertiongaps into reads and into query quality
             if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
                 gapped_read = read[2][:insert[0] - read[0]] + \
@@ -93,10 +110,12 @@ def update_reads(sam, insertions, deletions):
                     insert[1] * [255] + read[5][insert[0] - read[0]:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
-                
+
         newsam.append(read)
-    
+
     return newsam
+
+
 '''
         for delete in deletions:
             if read[1] == delete[0]:
@@ -111,10 +130,9 @@ def update_ref(ref_seq, insertions):
     """
     insertion of gaps into reference sequence
     """
-    temp = 0
     for insert in insertions:
-        ref_seq = ref_seq[:(insert[0] + temp)] + insert[1] * \
-            '-' + ref_seq[(insert[0] + temp):]
+        ref_seq = ref_seq[:insert[0]] + insert[1] * \
+            '-' + ref_seq[insert[0]:]
     return ref_seq
 
 
@@ -123,7 +141,8 @@ def main():
     ref_seq = get_ref_fasta('data/ref.fa')
     newsam, insertions, deletions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
-    updated_sam = update_reads(newsam, unique_inserts, deletions)
+    upd_inserts = update_insertions(unique_inserts)
+    updated_sam = update_reads(newsam, upd_inserts, deletions)
     '''
     for read in updated_sam:
         if read[1] == 'simulated.read45':
