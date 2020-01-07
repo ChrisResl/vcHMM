@@ -149,12 +149,14 @@ def update_ref(ref_seq, insertions):
 def get_pileup(samfile, pileupposition):
     bases = []
     qualities = []
+    mapping_qualities = []
     for read in samfile:
         # print(read)
         if read[0] < pileupposition and read[0] + len(read[2]) > pileupposition:
             bases.append(read[2][pileupposition - read[0]])
             qualities.append(read[5][pileupposition - read[0]])
-    return bases, qualities
+            mapping_qualities.append(read[4])
+    return bases, qualities, mapping_qualities
 
 
 def main():
@@ -165,11 +167,15 @@ def main():
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
-    for read in updated_sam:
-        if read[0] < 362:
-            print(read)
+    # for read in updated_sam:
+    #    if read[0] < 362:
+    #        print(read)
     updated_refseq = update_ref(ref_seq, upd_inserts)
-    print(updated_refseq[380:400])
+    # print(updated_refseq[380:400])
+    #bases, qualities, mapping_qualities = get_pileup(updated_sam, 388)
+    #print(bases)
+    #print(qualities)
+    #print(mapping_qualities)
 
 
 if __name__ == '__main__':
