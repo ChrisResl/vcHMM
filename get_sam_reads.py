@@ -94,14 +94,24 @@ def update_insertions(insertions):
     return sorted(upd_inserts)
 
 
+def update_startpos(sam, insertions):
+    """
+    updates startposition of reads
+    """
+    newsam = []
+    for read in sam:
+        for insert in insertions:
+            if read[0] > insert[0]:
+                read = [read[0] + insert[1], read[1], read[2],
+                        read[3], read[4], read[5]]
+        newsam.append(read)
+    return newsam
+
+
 def update_reads(sam, insertions, deletions):
     newsam = []
     for read in sam:
         for insert in insertions:
-            # change startposition of reads
-            if insert[0] < read[0]:
-                read = [read[0] + insert[1], read[1], read[2],
-                        read[3], read[4], read[5]]
             # insert insertiongaps into reads and into query quality
             if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
                 gapped_read = read[2][:insert[0] - read[0]] + \
@@ -153,12 +163,13 @@ def main():
     newsam, insertions, deletions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
     upd_inserts = update_insertions(unique_inserts)
-    updated_sam = update_reads(newsam, upd_inserts, deletions)
-    #baselist, qualitieslist = get_pileup(updated_sam, 103)
-    #print(baselist)
-    #print(qualitieslist)
-
-    updated_refseq = update_ref(ref_seq, unique_inserts)
+    upd_sam = update_startpos(newsam, upd_inserts)
+    updated_sam = update_reads(upd_sam, upd_inserts, deletions)
+    for read in updated_sam:
+        if read[0] < 362:
+            print(read)
+    updated_refseq = update_ref(ref_seq, upd_inserts)
+    print(updated_refseq[380:400])
 
 
 if __name__ == '__main__':
