@@ -137,8 +137,11 @@ def update_reads(sam, insertions, deletions):
                 nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
                 updated_read = read[2][: delete[1] + nr_of_gaps_before_delete] + \
                     delete[2] * '-' + read[2][delete[1]:]
+                updated_qual = read[5][:delete[1] + nr_of_gaps_before_delete - read[0]] + \
+                    delete[2] * [255] + read[5][insert[0] +
+                                                nr_of_gaps_before_delete - read[0]:]
                 read = [read[0], read[1], updated_read,
-                        read[3], read[4], read[5]]
+                        read[3], read[4], updated_qual]
 
         newsam.append(read)
 
@@ -150,8 +153,7 @@ def update_ref(ref_seq, insertions):
     insertion of gaps into reference sequence
     """
     for insert in insertions:
-        ref_seq = ref_seq[:insert[0]] + insert[1] * \
-            '-' + ref_seq[insert[0]:]
+        ref_seq = ref_seq[:insert[0]] + insert[1] * '-' + ref_seq[insert[0]:]
     return ref_seq
 
 
@@ -178,10 +180,10 @@ def main():
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
     for read in updated_sam:
         if read[0] < 362:
-            print(read[2])
+            print(read)
     updated_refseq = update_ref(ref_seq, upd_inserts)
     print(updated_refseq[380:400])
-    #bases, qualities, mapping_qualities = get_pileup(updated_sam, 388)
+    # bases, qualities, mapping_qualities = get_pileup(updated_sam, 388)
     # print(bases)
     # print(qualities)
     # print(mapping_qualities)
