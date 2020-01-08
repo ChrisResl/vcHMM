@@ -36,6 +36,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
         # get mapq
         pileup = pileup_testmatrix[i]
         pileup_qual = pileup_qual_testmatrix
+        # brauchst du hier nicht die mapq???
 
         # Control:
         # skip sub-loop, if read-pileup is <5 or Reference-Base is a "N"!

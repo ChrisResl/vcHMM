@@ -8,9 +8,7 @@ def find_base_state(xtilde, upd_ref):
     """
     base_state = []
 
-    """
-    Builds Vectors:
-    """
+    #Builds Vectors:
     vector_A = [["A", "A"], ["C", "C"], ["G", "G"], ["T", "T"], ["A", "C"], ["A", "G"], ["A", "T"], ["A", "-"],
                 ["C", "G"], ["C", "T"], ["C", "-"], ["G", "T"], ["G", "-"], ["T", "-"], ["-", "-"]]
     vector_C = [["C", "C"], ["A", "A"], ["G", "G"], ["T", "T"], ["A", "C"], ["C", "G"], ["C", "T"], ["C", "-"],
@@ -20,20 +18,14 @@ def find_base_state(xtilde, upd_ref):
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
 
-    """
-    Loop over updated reference:
-    """
+    # Loop over updated reference:
     for i in range(len(upd_ref)):
-        """
-        Case: xtilde(i) == -1: skip this, just base = base
-        """
+        # Case: xtilde(i) == -1: skip this, just base = base
         if xtilde[i] == -1:
             base_state.append(-1)
 
         else:
-            """
-            Get Base at Ri:
-            """
+            # Get Base at Ri:
             if upd_ref[i] == "A":
                 vector = vector_A
                 vector.extend(vector_A)
