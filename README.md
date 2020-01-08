@@ -13,7 +13,7 @@ Implementation of Hidden Markov Model (Viterbi) algorithm for the identification
 |Data acquisition                  |20.11.2019  | 24.11.2019 |<ul><li>- [x] </li></ul> |
 |Working algorithm                 |25.11.2019  | 20.12.2019 |<ul><li>- [ ] </li></ul> |
 |   transition matrix              |            |            |<ul><li>- [x] </li></ul> |
-|   update ref and sam             |            |            |<ul><li>- [ ] </li></ul> |
+|   update ref and sam             |            |            |<ul><li>- [x] </li></ul> |
 |   emission   matrix              |            |            |<ul><li>- [x] </li></ul> |
 |   HMM viterbi                    |            |            |<ul><li>- [x] </li></ul> |
 |Comparison with other tools       |21.12.2019  | 29.12.2019 |<ul><li>- [ ] </li></ul> |
