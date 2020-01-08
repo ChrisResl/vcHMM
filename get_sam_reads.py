@@ -32,14 +32,17 @@ def get_cigar(sam):
     cuts out the hard and soft clipped entries from read sequence and/or cigar string
     and gets the insertion- and deletion positions to update reads and query qualities
     """
+    newsam = []
     insertions = []
     deletions = []
+
     for read in sam:
         soft_at_beginning = True
         hard_at_beginning = True
         pos = 0
         # read[3] is cigarstring (operation, length)
         for operation in read[3]:
+
             # soft and hard clipping only at beginning and end
             if operation[0] == 4:
                 # Soft clipped, delete sequence from read and from cigar string
@@ -50,6 +53,7 @@ def get_cigar(sam):
                 else:
                     read = [read[0], read[1],
                             read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
+
             elif operation[0] == 5:
                 # Hard clipped, delete tuple from cigar string
                 if hard_at_beginning:
@@ -59,13 +63,18 @@ def get_cigar(sam):
                 else:
                     read = [read[0], read[1], read[2],
                             read[3][:-1], read[4], read[5]]
+
             elif operation[0] == 1:
                 # Insertion: save position, length and readname into insertion list
                 insertions.append([read[0] + pos, operation[1], read[1]])
+
             elif operation[0] == 2:
                 # Deletion: save queryname, position and lenght in deletion list
                 deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
+
+        newsam.append(read)
+
     return sam, insertions, deletions
 
 
@@ -104,7 +113,9 @@ def update_startpos(sam, insertions):
             if read[0] > insert[0]:
                 read = [read[0] + insert[1], read[1], read[2],
                         read[3], read[4], read[5]]
+
         newsam.append(read)
+
     return newsam
 
 
@@ -121,19 +132,17 @@ def update_reads(sam, insertions, deletions):
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
 
-        newsam.append(read)
-
-    return newsam
-
-
-'''
         for delete in deletions:
             if read[1] == delete[0]:
-                updated_read = read[2][: delete[1]] + \
+                nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
+                updated_read = read[2][: delete[1] + nr_of_gaps_before_delete] + \
                     delete[2] * '-' + read[2][delete[1]:]
                 read = [read[0], read[1], updated_read,
                         read[3], read[4], read[5]]
-'''
+
+        newsam.append(read)
+
+    return newsam
 
 
 def update_ref(ref_seq, insertions):
@@ -167,15 +176,15 @@ def main():
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
-    # for read in updated_sam:
-    #    if read[0] < 362:
-    #        print(read)
+    for read in updated_sam:
+        if read[0] < 362:
+            print(read[2])
     updated_refseq = update_ref(ref_seq, upd_inserts)
-    # print(updated_refseq[380:400])
+    print(updated_refseq[380:400])
     #bases, qualities, mapping_qualities = get_pileup(updated_sam, 388)
-    #print(bases)
-    #print(qualities)
-    #print(mapping_qualities)
+    # print(bases)
+    # print(qualities)
+    # print(mapping_qualities)
 
 
 if __name__ == '__main__':
