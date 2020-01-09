@@ -39,6 +39,8 @@ def get_cigar(sam):
     for read in sam:
         soft_at_beginning = True
         hard_at_beginning = True
+        same_read = True
+        nr_insertions = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
         for operation in read[3]:
@@ -65,8 +67,14 @@ def get_cigar(sam):
                             read[3][:-1], read[4], read[5]]
 
             elif operation[0] == 1:
-                # Insertion: save position, length and readname into insertion list
-                insertions.append([read[0] + pos, operation[1], read[1]])
+                if same_read:
+                    same_read = False
+                    nr_insertions = operation[1]
+                    # Insertion: save position, length and readname into insertion list
+                    insertions.append([read[0] + pos, operation[1], read[1]])
+                else:
+                    insertions.append(
+                        [read[0] + pos - nr_insertions, operation[1], read[1]])
 
             elif operation[0] == 2:
                 # Deletion: save queryname, position and lenght in deletion list
@@ -124,11 +132,11 @@ def update_reads(sam, insertions, deletions):
     for read in sam:
         for insert in insertions:
             # insert insertiongaps into reads and into query quality
-            if (read[1] != insert[2]) and (insert[0] > read[0]) and (insert[0] - read[0] < len(read[2])):
+            if (read[1] != insert[2]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
                 gapped_read = read[2][:insert[0] - read[0]] + \
                     insert[1] * '-' + read[2][insert[0] - read[0]:]
                 changed_qual = read[5][:insert[0] - read[0]] + \
-                    insert[1] * [255] + read[5][insert[0] - read[0]:]
+                    insert[1] * ['-'] + read[5][insert[0] - read[0]:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
 
@@ -137,8 +145,8 @@ def update_reads(sam, insertions, deletions):
                 nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
                 updated_read = read[2][: delete[1] + nr_of_gaps_before_delete] + \
                     delete[2] * '-' + read[2][delete[1]:]
-                updated_qual = read[5][:delete[1] + nr_of_gaps_before_delete - read[0]] + \
-                    delete[2] * [255] + read[5][insert[0] +
+                updated_qual = read[5][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
+                    delete[2] * ['-'] + read[5][delete[1] +
                                                 nr_of_gaps_before_delete - read[0]:]
                 read = [read[0], read[1], updated_read,
                         read[3], read[4], updated_qual]
@@ -162,31 +170,29 @@ def get_pileup(samfile, pileupposition):
     qualities = []
     mapping_qualities = []
     for read in samfile:
-        # print(read)
-        if read[0] < pileupposition and read[0] + len(read[2]) > pileupposition:
+
+        if read[0] <= pileupposition and read[0] + len(read[2]) >= pileupposition:
             bases.append(read[2][pileupposition - read[0]])
             qualities.append(read[5][pileupposition - read[0]])
             mapping_qualities.append(read[4])
+
     return bases, qualities, mapping_qualities
 
 
 def main():
     sam = get_sam('data/example.sam')
     ref_seq = get_ref_fasta('data/ref.fa')
+
     newsam, insertions, deletions = get_cigar(sam)
+
     unique_inserts = del_duplicate_ins(insertions)
+
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
     for read in updated_sam:
-        if read[0] < 362:
-            print(read)
+        print(read[2], read[3], read[5])
     updated_refseq = update_ref(ref_seq, upd_inserts)
-    print(updated_refseq[380:400])
-    # bases, qualities, mapping_qualities = get_pileup(updated_sam, 388)
-    # print(bases)
-    # print(qualities)
-    # print(mapping_qualities)
 
 
 if __name__ == '__main__':
