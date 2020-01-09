@@ -1,6 +1,6 @@
 def find_base_state(xtilde, upd_ref):
     """
-    This code finds the base state at every position of updated reference.
+    This code finds the base state (Hidden States) at every position of updated reference.
     e.g. at R(i = 7) base is gap, and there are only Gs within the reads: -> Base State is [G, G]
     :param xtilde:  Hidden State at position Ri
     :param upd_ref: Reference Genome with gaps
@@ -57,6 +57,5 @@ def find_base_state(xtilde, upd_ref):
             else:
                 print("Critical Error at def: find_base_state. Unknown Base at Position ", i, " in updated Reference!")
                 base_state.append(upd_ref[i])
-            print("not yet ready")
 
     return base_state
