@@ -70,8 +70,8 @@ def viterbi(emission_matrix, transmission_matrix):
                     if delta_matrix[y][z] != "NaN":
                         true_temp = float(
                             transmission_matrix[y][z]) * float(delta_matrix[y][z])
-                        print(transmission_matrix[y][z])
-                        print(delta_matrix[y][z])
+                        #print(transmission_matrix[y][z])
+                        #print(delta_matrix[y][z])
                         true_temp_list.append(true_temp)
                         # print("aus matrix:", true_temp)
                         # print("delta", delta_matrix[y][z])
