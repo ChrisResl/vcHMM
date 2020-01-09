@@ -1,7 +1,7 @@
 import math
 
 
-def build_emissionmatrix(upd_sam, upd_reference):
+def build_emissionmatrix(upd_reference):
     """
     This code create the emissionsmatrix.
     :param pile_up_read:

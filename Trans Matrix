@@ -1,0 +1,62 @@
+
+def create_transition_matrix(pre_transition_matrix, hetrate):
+    # size of transition matrix: m
+    m = 30
+    transition_matrix = [-1 for i in range(m)]  # = [[-1 for i in range(m)] for j in range(m)]
+
+    ### % This one: MATCH
+    #  (1,:)= buildTrans(tprob(1,:), hetrate);
+    transition_matrix[0] = create_row_transition_matrix(pre_transition_matrix[0], hetrate)
+
+    #### % This one: SNP
+    # transitionmatrix(2,:)= buildTrans(tprob(2,:),hetrate);
+    transition_matrix[1] = create_row_transition_matrix(pre_transition_matrix[1], hetrate)
+    # transitionmatrix(3,:) = transitionmatrix(2,:);
+    # transitionmatrix(4,:) = transitionmatrix(2,:);
+    # transitionmatrix(5,:) = transitionmatrix(2,:);
+    # transitionmatrix(6,:) = transitionmatrix(2,:);
+    # transitionmatrix(7,:) = transitionmatrix(2,:);
+    # transitionmatrix(9,:) = transitionmatrix(2,:);
+    # transitionmatrix(10,:) = transitionmatrix(2,:);
+    # transitionmatrix(12,:) = transitionmatrix(2,:);
+    for i in ([2, 3, 4, 5, 6, 8, 9, 11]):
+        transition_matrix[i] = transition_matrix[1]
+
+    ### % This one: DELETE
+    # transitionmatrix(15,:) = buildTrans(tprob(3,:), hetrate);
+    transition_matrix[14] = create_row_transition_matrix(pre_transition_matrix[2], hetrate)
+
+    ### % Deletions:  % this are alle Genotypes with ONE GAP (deletion). order is NOT the same as the paper, srly why?
+    # transitionmatrix(8,:) = (transitionmatrix(2,:)+transitionmatrix(15,:))/2;
+    # transitionmatrix(11,:) = transitionmatrix(8,:);
+    # transitionmatrix(13,:) = transitionmatrix(8,:);
+    # transitionmatrix(14,:) = transitionmatrix(8,:);
+
+    for i in ([7, 10, 12, 13]):
+        transition_matrix[i] = [-1 for i in range(m)]
+        for j in range(0, len(transition_matrix[1])):
+            transition_matrix[i][j] = (transition_matrix[1][j] + transition_matrix[14][j]) / 2
+
+    ### % This one: INSERTION
+    # transitionmatrix(16,:) = buildTrans(tprob(4,:),hetrate);
+    # transitionmatrix(17,:) = transitionmatrix(16,:);
+    # transitionmatrix(18,:) = transitionmatrix(16,:);
+    # transitionmatrix(19,:) = transitionmatrix(16,:);
+    # transitionmatrix(20,:) = transitionmatrix(16,:);
+    # transitionmatrix(21,:) = transitionmatrix(16,:);
+    # transitionmatrix(22,:) = transitionmatrix(16,:);
+    # transitionmatrix(23,:) = transitionmatrix(16,:);
+    # transitionmatrix(24,:) = transitionmatrix(16,:);
+    # transitionmatrix(25,:) = transitionmatrix(16,:);
+    # transitionmatrix(26,:) = transitionmatrix(16,:);
+    # transitionmatrix(27,:) = transitionmatrix(16,:);
+    # transitionmatrix(28,:) = transitionmatrix(16,:);
+    # transitionmatrix(29,:) = transitionmatrix(16,:);
+    transition_matrix[15] = create_row_transition_matrix(pre_transition_matrix[3], hetrate)
+    for i in range(16, 29):
+        transition_matrix[i] = transition_matrix[15]
+
+    ### This is invalid state
+    transition_matrix[29] = [1 / 30 for i in range(m)]
+
+    return transition_matrix
