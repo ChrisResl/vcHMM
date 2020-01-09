@@ -77,6 +77,7 @@ def get_cigar(sam):
                         [read[0] + pos - nr_insertions, operation[1], read[1]])
 
             elif operation[0] == 2:
+                print(read)
                 # Deletion: save queryname, position and lenght in deletion list
                 deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
@@ -190,8 +191,7 @@ def main():
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
-    for read in updated_sam:
-        print(read[2], read[3], read[5])
+
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
 
