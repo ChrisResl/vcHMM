@@ -762,12 +762,12 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                         # e.g. 2345 A AC
 
                         variants = str(
-                            i) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(base_states[i + ii][0])
+                            i-1) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(base_states[i + ii][0])
 
                     elif base_states[i + ii][0] != base_states[i + ii][1] and base_states[i + ii][0] != "-" and base_states[i + ii][1] != "-":
                         # e.g. 2345 A AC,AG
 
-                        variants = str(i) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(
+                        variants = str(i-1) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(
                             base_states[i + ii][0]) + "," + str(upd_ref[i - 1]) + str(base_states[i + ii][1])
 
                     elif base_states[i + ii][0] != base_states[i + ii][1] and (base_states[i + ii][0] != "-" or base_states[i + ii][1] != "-"):
@@ -775,21 +775,21 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
 
                         temp = ""
                         if base_states[i + ii][0] != "-":
-                            temp = base_states[i + ii][0]
+                            temp = str(base_states[i + ii][0])
                         elif base_states[i + ii][1] != "-":
-                            temp = base_states[i + ii][1]
+                            temp = str(base_states[i + ii][1])
                         else:
                             print("Error here. E#778902334")
 
                         variants = str(
-                            i) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(temp)
+                            i-1) + " \t " + str(ref[i - 1]) + " \t " + str(upd_ref[i - 1]) + str(temp)
 
                     else:
                         print(
                             "This case is not ready yet. Error critical in variant output. #6546547643443")
                 else:
                     # Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
-                    variants = variants + str(base_states[i + ii])
+                    variants = str(variants) + str(base_states[i + ii + 1][0])
                 if ii == this_gap_number - 1:
                     variant_list.append(variants)
 
@@ -799,7 +799,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: Complete Deletion / Deletion on both Strings
                 #       e.g. 2345 CG C
                 variants = str(
-                    i) + " \t " + str(ref[i - 1]) + str(ref[i]) + " \t " + str(ref[i - 1])
+                    i-1) + " \t " + str(ref[i - 1]) + str(ref[i]) + " \t " + str(ref[i - 1])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == "-" or base_states[i + gap_counter][1] == "-":
@@ -807,13 +807,13 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 #       e.g. 2345 CG CA, C
                 temp = 0
                 if base_states[i + gap_counter][0] != "-":
-                    temp = base_states[i + gap_counter][0]
+                    temp = str(base_states[i + gap_counter][0])
                 elif base_states[i + gap_counter][1] != "-":
-                    temp = base_states[i + gap_counter][1]
+                    temp = str(base_states[i + gap_counter][1])
                 else:
                     print("Error. #78932784")
 
-                variants = str(i) + " \t " + str(ref[i - 1]) + str(
+                variants = str(i-1) + " \t " + str(ref[i - 1]) + str(
                     ref[i]) + " \t " + str(ref[i - 1]) + temp + "," + str(ref[i - 1])
                 variant_list.append(variants)
 
@@ -829,9 +829,9 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 #     e.g. 2345 A C    Genotype: [A, C]
                 temp = 0
                 if base_states[i + gap_counter][0] != upd_ref[i + gap_counter]:
-                    temp = base_states[i + gap_counter][0]
+                    temp = str(base_states[i + gap_counter][0])
                 elif base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
-                    temp = base_states[i + gap_counter][1]
+                    temp = str(base_states[i + gap_counter][1])
                 variants = str(i) + " \t " + str(ref[i]) + " \t " + temp
                 variant_list.append(variants)
 
@@ -843,10 +843,10 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
     # print(variant_list)
-    xtilde_count_0 = xtilde.count(0)
+    xtilde_count_14 = xtilde.count(14)
     xtilde_count_30 = xtilde.count(30)
     xtilde_count_n = xtilde.count(-1)
-    print(xtilde_count_0)
+    print(xtilde_count_14)
     print(len(xtilde)-xtilde_count_30-xtilde_count_n)
     return variant_list
 
@@ -887,6 +887,11 @@ def main():
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
+    for i in range(340, 361):
+        print(i, "   ", get_pileup(updated_sam, i))
+
+
+
     #viterbi
     trans_matrix = create_transition_matrix(pre_transition_matrix_simulated, hetrate_simulated)
     emission_matrix = build_emissionmatrix(upd_sam, updated_refseq)
@@ -895,6 +900,5 @@ def main():
 
     #varient output
     output = create_varing_calling_output(ref_seq, updated_refseq, hidden_states, xtilde)
-
 
 main()
