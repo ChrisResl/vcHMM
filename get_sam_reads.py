@@ -145,7 +145,8 @@ def update_reads(sam, insertions, deletions):
             if read[1] == delete[0]:
                 nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
                 updated_read = read[2][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
-                    delete[2] * '-' + read[2][delete[1]:]
+                    delete[2] * '-' + read[2][delete[1] +
+                                              nr_of_gaps_before_delete - read[0]:]
                 updated_qual = read[5][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
                     delete[2] * ['-'] + read[5][delete[1] +
                                                 nr_of_gaps_before_delete - read[0]:]
@@ -191,8 +192,13 @@ def main():
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
     updated_sam = update_reads(upd_sam, upd_inserts, deletions)
-
+    # for read in updated_sam:
+    #    if read[0] >= 250 and read[0] <= 400:
+    #        print(read)
     updated_refseq = update_ref(ref_seq, upd_inserts)
+    # for i in range(0, 200):
+    #    bases, _, _ = get_pileup(updated_sam, i)
+    #    print(i, ref_seq[i], bases)
 
 
 if __name__ == '__main__':

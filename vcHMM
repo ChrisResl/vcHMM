@@ -149,7 +149,8 @@ def update_reads(sam, insertions, deletions):
             if read[1] == delete[0]:
                 nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
                 updated_read = read[2][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
-                    delete[2] * '-' + read[2][delete[1]:]
+                    delete[2] * '-' + read[2][delete[1] +
+                                              nr_of_gaps_before_delete - read[0]:]
                 updated_qual = read[5][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
                     delete[2] * ['-'] + read[5][delete[1] +
                                                 nr_of_gaps_before_delete - read[0]:]
