@@ -77,14 +77,13 @@ def get_cigar(sam):
                         [read[0] + pos - nr_insertions, operation[1], read[1]])
 
             elif operation[0] == 2:
-                print(read)
                 # Deletion: save queryname, position and lenght in deletion list
                 deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
 
         newsam.append(read)
 
-    return sam, insertions, deletions
+    return newsam, insertions, deletions
 
 
 def del_duplicate_ins(insertions):
@@ -109,7 +108,7 @@ def update_insertions(insertions):
         insert = [insert[0] + temp, insert[1], insert[2]]
         temp += insert[1]
         upd_inserts.append(insert)
-    return sorted(upd_inserts)
+    return upd_inserts
 
 
 def update_startpos(sam, insertions):
@@ -131,6 +130,7 @@ def update_startpos(sam, insertions):
 def update_reads(sam, insertions, deletions):
     newsam = []
     for read in sam:
+
         for insert in insertions:
             # insert insertiongaps into reads and into query quality
             if (read[1] != insert[2]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
@@ -144,7 +144,7 @@ def update_reads(sam, insertions, deletions):
         for delete in deletions:
             if read[1] == delete[0]:
                 nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
-                updated_read = read[2][: delete[1] + nr_of_gaps_before_delete] + \
+                updated_read = read[2][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
                     delete[2] * '-' + read[2][delete[1]:]
                 updated_qual = read[5][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
                     delete[2] * ['-'] + read[5][delete[1] +
@@ -172,7 +172,7 @@ def get_pileup(samfile, pileupposition):
     mapping_qualities = []
     for read in samfile:
 
-        if read[0] <= pileupposition and read[0] + len(read[2]) >= pileupposition:
+        if read[0] <= pileupposition and read[0] + len(read[2]) > pileupposition:
             bases.append(read[2][pileupposition - read[0]])
             qualities.append(read[5][pileupposition - read[0]])
             mapping_qualities.append(read[4])
