@@ -879,7 +879,7 @@ def create_output_file(values):
     new_values = []
     for element in values:
         print(element)
-        temp = "name\t" + element
+        temp = "simref\t" + element
         new_values.append(temp)
 
     # add id-column
@@ -897,7 +897,7 @@ def create_output_file(values):
 
     # add header
     head_list = []
-    meta_info = "##fileformat=VCFv4 "
+    meta_info = "##fileformat=VCFv4.0"
     head_list.append(meta_info)
 
     marker_info = "#CHROM\tPOS\tID\tREF\tALT"
