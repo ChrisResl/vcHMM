@@ -120,10 +120,12 @@ def del_duplicate_ins(insertions):
     deletes all duplicate insertions from insertion list
     """
     insertions = sorted(insertions)
-    unique_inserts = []
+    unique_inserts = [insertions[0]]
     for i in range(len(insertions) - 1):
-        if insertions[i][0] != insertions[i + 1][0]:
-            unique_inserts.append(insertions[i])
+        if insertions[i][0] == insertions[i + 1][0] and insertions[i][1] == insertions[i + 1][1]:
+            continue
+        else:
+            unique_inserts.append(insertions[i + 1])
     return unique_inserts
 
 
@@ -869,7 +871,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
     xtilde_count_14 = xtilde.count(14)
     xtilde_count_30 = xtilde.count(30)
     xtilde_count_n = xtilde.count(-1)
-    #print(xtilde_count_14)
+    # print(xtilde_count_14)
     #print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
     return variant_list
 
@@ -892,7 +894,8 @@ def create_output_file(values):
         while start >= 0 and n > 1:
             start = new_values[i].find(needle, start + len(needle))
             n -= 1
-        temp = new_values[i][0:start] + id_column_value + new_values[i][start + 1:len(new_values[i])]
+        temp = new_values[i][0:start] + id_column_value + \
+            new_values[i][start + 1:len(new_values[i])]
         new_values2.append(temp)
 
     # add header
