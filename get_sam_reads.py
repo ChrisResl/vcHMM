@@ -1,9 +1,5 @@
-import math
-from scipy.special import logsumexp
 import pysam
 from Bio import SeqIO
-
-import numpy as np
 
 
 def get_ref_fasta(file_name):
@@ -48,65 +44,68 @@ def get_cigar(sam):
         gaps_before = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
-        for operation in read[3]:
+        if read[3] is None:
+            continue
+        else:
+            for operation in read[3]:
 
-            # soft and hard clipping only at beginning and end
-            if operation[0] == 4:
-                # Soft clipped, delete sequence from read and from cigar string
-                if soft_at_beginning:
-                    soft_at_beginning = False
-                    read = [read[0] + operation[1], read[1],
-                            read[2][operation[1]:], read[3][1:], read[4], read[5]]
-                else:
-                    read = [read[0], read[1],
-                            read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
-
-            elif operation[0] == 5:
-                # Hard clipped, delete tuple from cigar string
-                if hard_at_beginning:
-                    hard_at_beginning = False
-                    read = [read[0], read[1], read[2],
-                            read[3][1:], read[4], read[5]]
-                else:
-                    read = [read[0], read[1], read[2],
-                            read[3][:-1], read[4], read[5]]
-
-            elif operation[0] == 1:
-                if read[1] not in readnames:
-                    if same_read:
-                        same_read = False
-                        nr_insertions = operation[1]
-                        insertions.append(
-                            [read[0] + pos, operation[1], read[1]])
+                # soft and hard clipping only at beginning and end
+                if operation[0] == 4:
+                    # Soft clipped, delete sequence from read and from cigar string
+                    if soft_at_beginning:
+                        soft_at_beginning = False
+                        read = [read[0] + operation[1], read[1],
+                                read[2][operation[1]:], read[3][1:], read[4], read[5]]
                     else:
-                        insertions.append(
-                            [read[0] + pos - nr_insertions, operation[1], read[1]])
-                else:
-                    newname = read[1] + 'b'
-                    read = [read[0], newname,
-                            read[2], read[3], read[4], read[5]]
-                    if same_read:
-                        same_read = False
-                        nr_insertions = operation[1]
-                        insertions.append(
-                            [read[0] + pos, operation[1], read[1]])
-                    else:
-                        insertions.append(
-                            [read[0] + pos - nr_insertions, operation[1], read[1]])
+                        read = [read[0], read[1],
+                                read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
 
-            elif operation[0] == 2:
-                # Deletion: add deletions in readsequence
-                gaps_before = read[2][:pos].count('-')
-                updated_read = read[2][: pos + gaps_before] + \
-                    operation[1] * '-' + \
-                    read[2][pos + gaps_before:]
-                updated_qual = read[5][: pos + gaps_before] + \
-                    operation[1] * ['-'] + \
-                    read[5][pos + gaps_before:]
-                read = [read[0], read[1], updated_read,
-                        read[3], read[4], updated_qual]
-#                deletions.append([read[1], pos, operation[1]])
-            pos += operation[1]
+                elif operation[0] == 5:
+                    # Hard clipped, delete tuple from cigar string
+                    if hard_at_beginning:
+                        hard_at_beginning = False
+                        read = [read[0], read[1], read[2],
+                                read[3][1:], read[4], read[5]]
+                    else:
+                        read = [read[0], read[1], read[2],
+                                read[3][:-1], read[4], read[5]]
+
+                elif operation[0] == 1:
+                    if read[1] not in readnames:
+                        if same_read:
+                            same_read = False
+                            nr_insertions = operation[1]
+                            insertions.append(
+                                [read[0] + pos, operation[1], read[1]])
+                        else:
+                            insertions.append(
+                                [read[0] + pos - nr_insertions, operation[1], read[1]])
+                    else:
+                        newname = read[1] + 'b'
+                        read = [read[0], newname,
+                                read[2], read[3], read[4], read[5]]
+                        if same_read:
+                            same_read = False
+                            nr_insertions = operation[1]
+                            insertions.append(
+                                [read[0] + pos, operation[1], read[1]])
+                        else:
+                            insertions.append(
+                                [read[0] + pos - nr_insertions, operation[1], read[1]])
+
+                elif operation[0] == 2:
+                    # Deletion: add deletions in readsequence
+                    gaps_before = read[2][:pos].count('-')
+                    updated_read = read[2][: pos + gaps_before] + \
+                        operation[1] * '-' + \
+                        read[2][pos + gaps_before:]
+                    updated_qual = read[5][: pos + gaps_before] + \
+                        operation[1] * ['-'] + \
+                        read[5][pos + gaps_before:]
+                    read = [read[0], read[1], updated_read,
+                            read[3], read[4], updated_qual]
+    #                deletions.append([read[1], pos, operation[1]])
+                pos += operation[1]
 
         readnames.append(read[1])
 
@@ -204,12 +203,22 @@ def get_pileup(samfile, pileupposition):
 
     return bases, qualities, mapping_qualities
 
+
+def main():
     # gat data
-    sam = get_sam('example.sam')
-    ref_seq = get_ref_fasta('ref.fa')
+
+    sam = get_sam('data/test_10X_Coverage/read_sort.sam')
+    # sam = get_sam('data/example.sam')
+    # for read in sam:
+    #     if read[3] is not None:
+    #         print(read)
+    ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
+    #ref_seq = get_ref_fasta('data/ref.fa')
 
     # get updated data
     newsam, insertions = get_cigar(sam)
+    for insert in insertions:
+        print(insert)
     unique_inserts = del_duplicate_ins(insertions)
     upd_inserts = update_insertions(unique_inserts)
     upd_sam = update_startpos(newsam, upd_inserts)
@@ -217,6 +226,11 @@ def get_pileup(samfile, pileupposition):
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
     for i in range(340, 361):
-        print(i, "   ", get_pileup(updated_sam, i))
+        bases, _, _ = get_pileup(updated_sam, i)
+        print(i, bases)
 
     print(updated_refseq[340:360])
+
+
+if __name__ == '__main__':
+    main()

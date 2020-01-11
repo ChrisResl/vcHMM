@@ -48,65 +48,68 @@ def get_cigar(sam):
         gaps_before = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
-        for operation in read[3]:
+        if read[3] is None:
+            continue
+        else:
+            for operation in read[3]:
 
-            # soft and hard clipping only at beginning and end
-            if operation[0] == 4:
-                # Soft clipped, delete sequence from read and from cigar string
-                if soft_at_beginning:
-                    soft_at_beginning = False
-                    read = [read[0] + operation[1], read[1],
-                            read[2][operation[1]:], read[3][1:], read[4], read[5]]
-                else:
-                    read = [read[0], read[1],
-                            read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
-
-            elif operation[0] == 5:
-                # Hard clipped, delete tuple from cigar string
-                if hard_at_beginning:
-                    hard_at_beginning = False
-                    read = [read[0], read[1], read[2],
-                            read[3][1:], read[4], read[5]]
-                else:
-                    read = [read[0], read[1], read[2],
-                            read[3][:-1], read[4], read[5]]
-
-            elif operation[0] == 1:
-                if read[1] not in readnames:
-                    if same_read:
-                        same_read = False
-                        nr_insertions = operation[1]
-                        insertions.append(
-                            [read[0] + pos, operation[1], read[1]])
+                # soft and hard clipping only at beginning and end
+                if operation[0] == 4:
+                    # Soft clipped, delete sequence from read and from cigar string
+                    if soft_at_beginning:
+                        soft_at_beginning = False
+                        read = [read[0] + operation[1], read[1],
+                                read[2][operation[1]:], read[3][1:], read[4], read[5]]
                     else:
-                        insertions.append(
-                            [read[0] + pos - nr_insertions, operation[1], read[1]])
-                else:
-                    newname = read[1] + 'b'
-                    read = [read[0], newname,
-                            read[2], read[3], read[4], read[5]]
-                    if same_read:
-                        same_read = False
-                        nr_insertions = operation[1]
-                        insertions.append(
-                            [read[0] + pos, operation[1], read[1]])
-                    else:
-                        insertions.append(
-                            [read[0] + pos - nr_insertions, operation[1], read[1]])
+                        read = [read[0], read[1],
+                                read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
 
-            elif operation[0] == 2:
-                # Deletion: add deletions in readsequence
-                gaps_before = read[2][:pos].count('-')
-                updated_read = read[2][: pos + gaps_before] + \
-                    operation[1] * '-' + \
-                    read[2][pos + gaps_before:]
-                updated_qual = read[5][: pos + gaps_before] + \
-                    operation[1] * ['-'] + \
-                    read[5][pos + gaps_before:]
-                read = [read[0], read[1], updated_read,
-                        read[3], read[4], updated_qual]
-#                deletions.append([read[1], pos, operation[1]])
-            pos += operation[1]
+                elif operation[0] == 5:
+                    # Hard clipped, delete tuple from cigar string
+                    if hard_at_beginning:
+                        hard_at_beginning = False
+                        read = [read[0], read[1], read[2],
+                                read[3][1:], read[4], read[5]]
+                    else:
+                        read = [read[0], read[1], read[2],
+                                read[3][:-1], read[4], read[5]]
+
+                elif operation[0] == 1:
+                    if read[1] not in readnames:
+                        if same_read:
+                            same_read = False
+                            nr_insertions = operation[1]
+                            insertions.append(
+                                [read[0] + pos, operation[1], read[1]])
+                        else:
+                            insertions.append(
+                                [read[0] + pos - nr_insertions, operation[1], read[1]])
+                    else:
+                        newname = read[1] + 'b'
+                        read = [read[0], newname,
+                                read[2], read[3], read[4], read[5]]
+                        if same_read:
+                            same_read = False
+                            nr_insertions = operation[1]
+                            insertions.append(
+                                [read[0] + pos, operation[1], read[1]])
+                        else:
+                            insertions.append(
+                                [read[0] + pos - nr_insertions, operation[1], read[1]])
+
+                elif operation[0] == 2:
+                    # Deletion: add deletions in readsequence
+                    gaps_before = read[2][:pos].count('-')
+                    updated_read = read[2][: pos + gaps_before] + \
+                        operation[1] * '-' + \
+                        read[2][pos + gaps_before:]
+                    updated_qual = read[5][: pos + gaps_before] + \
+                        operation[1] * ['-'] + \
+                        read[5][pos + gaps_before:]
+                    read = [read[0], read[1], updated_read,
+                            read[3], read[4], updated_qual]
+    #                deletions.append([read[1], pos, operation[1]])
+                pos += operation[1]
 
         readnames.append(read[1])
 
@@ -824,7 +827,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: Complete Deletion / Deletion on both Strings
                 #       e.g. 2345 CG C
                 variants = str(
-                    i+1) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
+                    i + 1) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == "-" or base_states[i + gap_counter][1] == "-":
@@ -838,7 +841,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 else:
                     print("Error. #78932784")
 
-                variants = str(i+1) + "\t" + str(ref[i - 1]) + str(
+                variants = str(i + 1) + "\t" + str(ref[i - 1]) + str(
                     ref[i]) + "\t" + str(ref[i - 1]) + temp + "," + str(ref[i - 1])
                 variant_list.append(variants)
 
@@ -846,7 +849,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: SNP is equal on both strings
                 #       e.g. 2345 A C  Genotype: [C, C]
                 variants = str(
-                    i+1) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
+                    i + 1) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == upd_ref[i + gap_counter] or base_states[i + gap_counter][1] == upd_ref[i + gap_counter]:
@@ -857,13 +860,13 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                     temp = str(base_states[i + gap_counter][0])
                 elif base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
                     temp = str(base_states[i + gap_counter][1])
-                variants = str(i+1) + "\t" + str(ref[i]) + "\t" + temp
+                variants = str(i + 1) + "\t" + str(ref[i]) + "\t" + temp
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] != upd_ref[i + gap_counter] and base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
                 # Case: 2 different SNPs
                 #       e.g. 2345 A C,G
-                variants = str(i+1) + "\t" + str(ref[i]) + "\t" + base_states[i +
+                variants = str(i + 1) + "\t" + str(ref[i]) + "\t" + base_states[i +
                                                                                 gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
 
@@ -871,7 +874,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
     xtilde_count_14 = xtilde.count(14)
     xtilde_count_30 = xtilde.count(30)
     xtilde_count_n = xtilde.count(-1)
-    #print(xtilde_count_14)
+    # print(xtilde_count_14)
     #print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
     return variant_list
 
@@ -894,7 +897,8 @@ def create_output_file(values):
         while start >= 0 and n > 1:
             start = new_values[i].find(needle, start + len(needle))
             n -= 1
-        temp = new_values[i][0:start] + id_column_value + new_values[i][start + 1:len(new_values[i])]
+        temp = new_values[i][0:start] + id_column_value + \
+            new_values[i][start + 1:len(new_values[i])]
         new_values2.append(temp)
 
     # add header
@@ -941,8 +945,10 @@ def main():
         pre_transition_matrix_simulated, hetrate_simulated)
 
     # gat data
-    sam = get_sam('example.sam')
-    ref_seq = get_ref_fasta('ref.fa')
+    # sam = get_sam('example.sam')
+    sam = get_sam('data/test_10X_Coverage/read_sort.sam')
+    # ref_seq = get_ref_fasta('ref.fa')
+    ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
     # get updated data
     newsam, insertions = get_cigar(sam)
