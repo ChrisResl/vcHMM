@@ -38,13 +38,14 @@ def get_cigar(sam):
     """
     newsam = []
     insertions = []
-    deletions = []
+    readnames = []
 
     for read in sam:
         soft_at_beginning = True
         hard_at_beginning = True
         same_read = True
         nr_insertions = 0
+        gaps_before = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
         for operation in read[3]:
@@ -71,23 +72,47 @@ def get_cigar(sam):
                             read[3][:-1], read[4], read[5]]
 
             elif operation[0] == 1:
-                if same_read:
-                    same_read = False
-                    nr_insertions = operation[1]
-                    # Insertion: save position, length and readname into insertion list
-                    insertions.append([read[0] + pos, operation[1], read[1]])
+                if read[1] not in readnames:
+                    if same_read:
+                        same_read = False
+                        nr_insertions = operation[1]
+                        insertions.append(
+                            [read[0] + pos, operation[1], read[1]])
+                    else:
+                        insertions.append(
+                            [read[0] + pos - nr_insertions, operation[1], read[1]])
                 else:
-                    insertions.append(
-                        [read[0] + pos - nr_insertions, operation[1], read[1]])
+                    newname = read[1] + 'b'
+                    read = [read[0], newname,
+                            read[2], read[3], read[4], read[5]]
+                    if same_read:
+                        same_read = False
+                        nr_insertions = operation[1]
+                        insertions.append(
+                            [read[0] + pos, operation[1], read[1]])
+                    else:
+                        insertions.append(
+                            [read[0] + pos - nr_insertions, operation[1], read[1]])
 
             elif operation[0] == 2:
-                # Deletion: save queryname, position and lenght in deletion list
-                deletions.append([read[1], pos, operation[1]])
+                # Deletion: add deletions in readsequence
+                gaps_before = read[2][:pos].count('-')
+                updated_read = read[2][: pos + gaps_before] + \
+                    operation[1] * '-' + \
+                    read[2][pos + gaps_before:]
+                updated_qual = read[5][: pos + gaps_before] + \
+                    operation[1] * ['-'] + \
+                    read[5][pos + gaps_before:]
+                read = [read[0], read[1], updated_read,
+                        read[3], read[4], updated_qual]
+#                deletions.append([read[1], pos, operation[1]])
             pos += operation[1]
+
+        readnames.append(read[1])
 
         newsam.append(read)
 
-    return newsam, insertions, deletions
+    return newsam, insertions  # , deletions
 
 
 def del_duplicate_ins(insertions):
@@ -131,31 +156,23 @@ def update_startpos(sam, insertions):
     return newsam
 
 
-def update_reads(sam, insertions, deletions):
+def update_reads(sam, insertions):
     newsam = []
     for read in sam:
 
         for insert in insertions:
-            # insert insertiongaps into reads and into query quality
+            gaps_before = 0
+            # insert gaps into reads and into query quality
             if (read[1] != insert[2]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
-                gapped_read = read[2][:insert[0] - read[0]] + \
-                    insert[1] * '-' + read[2][insert[0] - read[0]:]
-                changed_qual = read[5][:insert[0] - read[0]] + \
-                    insert[1] * ['-'] + read[5][insert[0] - read[0]:]
+                gaps_before = read[2][:insert[0] - read[0]].count('-')
+                gapped_read = read[2][:insert[0] - read[0] + gaps_before] + \
+                    insert[1] * '-' + \
+                    read[2][insert[0] - read[0] + gaps_before:]
+                changed_qual = read[5][:insert[0] - read[0] + gaps_before] + \
+                    insert[1] * ['-'] + \
+                    read[5][insert[0] - read[0] + gaps_before:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
-
-        for delete in deletions:
-            if read[1] == delete[0]:
-                nr_of_gaps_before_delete = read[2][:delete[1]].count('-')
-                updated_read = read[2][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
-                    delete[2] * '-' + read[2][delete[1] +
-                                              nr_of_gaps_before_delete - read[0]:]
-                updated_qual = read[5][: delete[1] + nr_of_gaps_before_delete - read[0]] + \
-                    delete[2] * ['-'] + read[5][delete[1] +
-                                                nr_of_gaps_before_delete - read[0]:]
-                read = [read[0], read[1], updated_read,
-                        read[3], read[4], updated_qual]
 
         newsam.append(read)
 
@@ -167,7 +184,8 @@ def update_ref(ref_seq, insertions):
     insertion of gaps into reference sequence
     """
     for insert in insertions:
-        ref_seq = ref_seq[:insert[0]] + insert[1] * '-' + ref_seq[insert[0]:]
+        ref_seq = ref_seq[:insert[0]] + \
+            insert[1] * '-' + ref_seq[insert[0]:]
     return ref_seq
 
 
@@ -843,7 +861,7 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                                                                                 gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
 
-    # print(variant_list)
+    print(len(variant_list))
     xtilde_count_14 = xtilde.count(14)
     xtilde_count_30 = xtilde.count(30)
     xtilde_count_n = xtilde.count(-1)
@@ -877,8 +895,8 @@ def main():
     test_transmatrix = create_transition_matrix(pre_transition_matrix_simulated, hetrate_simulated)
 
     #gat data
-    sam = get_sam('example.sam')
-    ref_seq = get_ref_fasta('ref.fa')
+    sam = get_sam('data/example.sam')
+    ref_seq = get_ref_fasta('data/ref.fa')
 
     #get updated data
     newsam, insertions, deletions = get_cigar(sam)
