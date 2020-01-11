@@ -874,6 +874,43 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
     return variant_list
 
 
+def create_output_file(values):
+    # add name-column to list
+    new_values = []
+    for element in values:
+        print(element)
+        temp = "name\t" + element
+        new_values.append(temp)
+
+    # add id-column
+    new_values2 = []
+    id_column_value = "\t.\t "
+    needle = "\t"
+    for i in range(len(new_values)):
+        start = new_values[i].find(needle)
+        n = 2
+        while start >= 0 and n > 1:
+            start = new_values[i].find(needle, start + len(needle))
+            n -= 1
+        temp = new_values[i][0:start] + id_column_value + new_values[i][start + 1:len(new_values[i])]
+        new_values2.append(temp)
+
+    # add header
+    head_list = []
+    meta_info = "##fileformat=VCFv4 "
+    head_list.append(meta_info)
+
+    marker_info = "#CHROM\tPOS\tID\tREF\tALT"
+    head_list.append(marker_info)
+
+    head_list.extend(new_values2)
+
+    # w file
+    with open("test_file.txt", 'w') as output:
+        for element in head_list:
+            output.write(str(element) + '\n')
+
+
 def main():
 
     # This one is pre-transition-matrix for example
@@ -916,6 +953,8 @@ def main():
     for i in range(340, 361):
         print(i, "   ", get_pileup(updated_sam, i))
 
+    print(updated_refseq[340:360])
+
     # viterbi
     trans_matrix = create_transition_matrix(
         pre_transition_matrix_simulated, hetrate_simulated)
@@ -926,6 +965,7 @@ def main():
     # varient output
     output = create_varing_calling_output(
         ref_seq, updated_refseq, hidden_states, xtilde)
+    create_output_file(output)
 
 
 main()
