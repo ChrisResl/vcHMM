@@ -207,12 +207,9 @@ def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
     """
     Important: this code is done, works fine and is valid. FINGER WEG.
     This code calculates a row for the transition Matrix, given a pre transition matrix and a hetrate.
-
     - Pre Transition Matrix: only 4 hidden States, because we are predicting heterozygous polymorphism,
      one needs a more advanced Transition Matrix
-
      - Hetrate: A needed value, important for calculation of the advanced Transition Matrix
-
      :return:  A single row for the advanced Transition Matrix
     """
 
@@ -396,7 +393,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
         # Change quality score:
         # case: all values belong to gaps: mapq/4
-        if all(elem == pileup_qual[0] for elem in pileup_qual) and pileup_qual == "-":
+        if all(elem == pileup_qual[0] for elem in pileup_qual) and [pileup_qual[p] == "-" for p in range(len(pileup_qual))]:
             for y in range(len(pileup_qual)):
                 pileup_qual[y] = mapq_list[y] / 4
 
@@ -872,8 +869,8 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
     xtilde_count_14 = xtilde.count(14)
     xtilde_count_30 = xtilde.count(30)
     xtilde_count_n = xtilde.count(-1)
-    print(xtilde_count_14)
-    print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
+    #print(xtilde_count_14)
+    #print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
     return variant_list
 
 
@@ -905,8 +902,8 @@ def main():
         pre_transition_matrix_simulated, hetrate_simulated)
 
     # gat data
-    sam = get_sam('data/example.sam')
-    ref_seq = get_ref_fasta('data/ref.fa')
+    sam = get_sam('example.sam')
+    ref_seq = get_ref_fasta('ref.fa')
 
     # get updated data
     newsam, insertions = get_cigar(sam)
