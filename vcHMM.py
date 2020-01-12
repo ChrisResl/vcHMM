@@ -152,7 +152,7 @@ def update_insertions(insertions):
     This step is required to align the insertions with the modified 
     reference genome.
     
-    e.g. [200 2], 2 10 Insertions before -> [210 2]
+    e.g. [200 2], 10 Insertions before -> [210 2]
     
     :return: newsam
     """
@@ -219,6 +219,8 @@ def update_reads(sam, insertions):
 def update_ref(ref_seq, insertions):
     """
     Insert gaps into reference sequence from read-cigar-strings.
+    e.g.
+        ACGTACGT -> ACGT--ACGT
     """
     for insert in insertions.keys():
         ref_seq = ref_seq[:insert[0]] + \
@@ -227,6 +229,16 @@ def update_ref(ref_seq, insertions):
 
 
 def get_pileup(samfile, pileupposition):
+    """
+    Get all read bases, qualities and mapq for a given reference position. 
+    Needs:  samfile(with all kind of modifications from before!), 
+            pileupposition(Reference-Positions) 
+    
+    e.g.
+        R[2] -> ["A", "A", "A", "C", "C", "C"], [22, 12, 23, 20, 18, 21],  [18, 19, 17, 23, 20, 19]
+    
+    :return: bases, qualities and mapping_qualities (mapq)
+    """
     bases = []
     qualities = []
     mapping_qualities = []
@@ -242,23 +254,18 @@ def get_pileup(samfile, pileupposition):
 
 def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
     """
-    Important: this code is done, works fine and is valid. FINGER WEG.
-    This code calculates a row for the transition Matrix, given a pre transition matrix and a hetrate.
-    - Pre Transition Matrix: only 4 hidden States, because we are predicting heterozygous polymorphism,
-     one needs a more advanced Transition Matrix
-     - Hetrate: A needed value, important for calculation of the advanced Transition Matrix
-     :return:  A single row for the advanced Transition Matrix
+    Calculates a row of the transition Matrix, given a "pre transition matrix" and a hetrate.
+    Keep in Mind:
+        - Pre Transition Matrix: only 4 hidden States, because for predicting heterozygous polymorphism,
+        one needs a more advanced Transition Matrix
+    
+     
+     :return:  A single row for the Transition Matrix
     """
 
-    # WICHHTIG: Immer daran denken, indizie von MATLAB MÜSSEN in python um 1 verringert werden!
-    # Matlab rechnet ab 1, python ab 0!!!
-
-    # size of this: 30
     m = 30
     row_transition_matrix = [-1 for i in range(m)]
 
-    # print(vector_of_pre_transition_matrix)
-    # print(hetrate)
 
     # transrow(30) = tprobi(4) * hetrate/32;
     row_transition_matrix[29] = vector_of_pre_transition_matrix[3] * hetrate / 32
