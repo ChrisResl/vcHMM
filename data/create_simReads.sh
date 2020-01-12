@@ -4,7 +4,10 @@ samtools faidx ref.fa
 
 for i in {1..100}
 do
-wgsim -1 70 -2 70 -r 0.01 -R 0.15 -X 0.3 -e 0.0175 -N 5000 -S $i ref.fa read1_$i.fasta read2_$i.fasta 1 > variants_$i.txt
+
+#Coverage
+#10X 5000 ; 20X 10000 ; 30X 15000
+wgsim -1 70 -2 70 -r 0.01 -R 0.15 -X 0.3 -e 0.0175 -N 15000 -S $i ref.fa read1_$i.fasta read2_$i.fasta 1 > variants_$i.txt
 
 bwa index -p simref -a is ref.fa
 
