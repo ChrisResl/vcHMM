@@ -943,7 +943,7 @@ def main():
     #                                   0.6994015911, 0.0017424552],
     #                               [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
 
-    # Heterozygous Rate   --->>> why do we need this?
+    # Heterozygous Rate   
     # For simulated data
     hetrate_simulated = 0.01
     # For real data
