@@ -254,19 +254,21 @@ def get_pileup(samfile, pileupposition):
 
 def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
     """
-    Calculates a row of the transition Matrix, given a "pre transition matrix" and a hetrate.
+    Calculates a row of the transition Matrix, given a 
+    "pre transition matrix" and a hetrate.
     Keep in Mind:
-        - Pre Transition Matrix: only 4 hidden States, because for predicting heterozygous polymorphism,
+        - Pre Transition Matrix: only 4 hidden States, because 
+        for predicting heterozygous polymorphism,
         one needs a more advanced Transition Matrix
-    
-     
+        - States are 1-based, python-code is 0-based 
+            -> transrow(30) = row_transition_matrix[29]
+
      :return:  A single row for the Transition Matrix
     """
 
     m = 30
     row_transition_matrix = [-1 for i in range(m)]
-
-
+    
     # transrow(30) = tprobi(4) * hetrate/32;
     row_transition_matrix[29] = vector_of_pre_transition_matrix[3] * hetrate / 32
 
@@ -321,17 +323,21 @@ def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
 
 
 def create_transition_matrix(pre_transition_matrix, hetrate):
+    """
+    
+    """
+    
     # size of transition matrix: m
     m = 30
     # = [[-1 for i in range(m)] for j in range(m)]
     transition_matrix = [-1 for i in range(m)]
 
-    # % This one: MATCH
+    ### This one: MATCH
     #  (1,:)= buildTrans(tprob(1,:), hetrate);
     transition_matrix[0] = create_row_transition_matrix(
         pre_transition_matrix[0], hetrate)
 
-    # % This one: SNP
+    ### This one: SNP
     # transitionmatrix(2,:)= buildTrans(tprob(2,:),hetrate);
     transition_matrix[1] = create_row_transition_matrix(
         pre_transition_matrix[1], hetrate)
@@ -346,12 +352,13 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
     for i in ([2, 3, 4, 5, 6, 8, 9, 11]):
         transition_matrix[i] = transition_matrix[1]
 
-    # % This one: DELETE
+    ### This one: Full-Delition
     # transitionmatrix(15,:) = buildTrans(tprob(3,:), hetrate);
     transition_matrix[14] = create_row_transition_matrix(
         pre_transition_matrix[2], hetrate)
 
-    # % Deletions:  % this are alle Genotypes with ONE GAP (deletion). order is NOT the same as the paper, srly why?
+    ### Part-Deletions: this are all Genotypes with ONE GAP (deletion). 
+    #   order is NOT the same as the paper, but same as in Matlab
     # transitionmatrix(8,:) = (transitionmatrix(2,:)+transitionmatrix(15,:))/2;
     # transitionmatrix(11,:) = transitionmatrix(8,:);
     # transitionmatrix(13,:) = transitionmatrix(8,:);
@@ -363,7 +370,7 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
             transition_matrix[i][j] = (
                 transition_matrix[1][j] + transition_matrix[14][j]) / 2
 
-    # % This one: INSERTION
+    ### This are: INSERTIONs
     # transitionmatrix(16,:) = buildTrans(tprob(4,:),hetrate);
     # transitionmatrix(17,:) = transitionmatrix(16,:);
     # transitionmatrix(18,:) = transitionmatrix(16,:);
@@ -383,7 +390,7 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
     for i in range(16, 29):
         transition_matrix[i] = transition_matrix[15]
 
-    # This is invalid state
+    ### This one: Invalid State
     transition_matrix[29] = [1 / 30 for i in range(m)]
 
     return transition_matrix
@@ -391,13 +398,14 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
 
 def build_emissionmatrix(upd_sam, upd_reference):
     """
-    create the emissionsmatrix.
+    Create the Emission Matrix.
     :param pile_up_read:
     :param pile_up_quality:
     :param updated_reference:
     :param mapq_list:
-    :return:
+    :return: Emission Matrix
     """
+    ### Creating Genotype-Vectors / Hidden-State-Vectors
     # This is a "translation" from the MATLAB-Code, from numbers to letters.
     vector_A = [["A", "A"], ["C", "C"], ["G", "G"], ["T", "T"], ["A", "C"], ["A", "G"], ["A", "T"], ["A", "-"],
                 ["C", "G"], ["C", "T"], ["C", "-"], ["G", "T"], ["G", "-"], ["T", "-"], ["-", "-"]]
@@ -407,41 +415,37 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 ["A", "C"], ["A", "T"], ["A", "-"], ["C", "T"], ["C", "-"], ["T", "-"], ["-", "-"]]
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
-
+    #keep in mind: vector_Gap = vectot_A
+    
     ematrix = []  # Length: updated_reference * 30
 
-    # test-values. clc this after get-read-list is ready.
-    # pileup_testmatrix = ["A", "A", "A", "A", "A"], ["C", "C", "C", "C", "A"], [
-    #   "A", "A", "A", "A", "A"], ["T", "T", "T", "T", "T"], ["A", "A", "A", "A"]
-    #pileup_qual_testmatrix = [1, 2, 3, 4, 5, 6, 7, 8, "-"]
 
-    #mapq_list = [1, 1, 2, 3, 4, 5]
-
-    # This loop is for The len of reference. / Run over reference.
+    # This loop is for The len of reference / Run over reference.
+    # For every Reference-Base: creating emission prob. for 30 states(list)
+    # 
     for i in range(len(upd_reference)):
+        
         # get pileup of reads
-        # get pileup of  quality
+        # get pileup of quality
         # get mapq
-
         pileup, pileup_qual, mapq_list = get_pileup(upd_sam, i)
 
-        #pileup = bases
-        #pileup_qual = qualities
-        #mapq_list = mapping_qualities
-
-        # Control:
-        # skip sub-loop, if read-pileup is <5 or Reference-Base is a "N"!
+        # skip loop, if len(read-pileup) is <5 or Reference-Base is a "N"
+        # append -1 as indicator for this case
         if len(pileup) < 5 or upd_reference[i] == "N":
             ematrix.append(-1)
             continue
 
-        # Change quality score:
-        # case: all values belong to gaps: mapq/4
+        ## Change quality score:
+        # case: all values belong to gaps, problem: gaps do not have q-scores
+        # quality-score -> mapq/4
         if all(elem == pileup_qual[0] for elem in pileup_qual) and [pileup_qual[p] == "-" for p in range(len(pileup_qual))]:
             for y in range(len(pileup_qual)):
                 pileup_qual[y] = mapq_list[y] / 4
-
-        # case: gaps are given, problem: gaps do not have q-scores!
+        
+        ## Change quality score:
+        # case: somegaps are given, problem: gaps do not have q-scores!
+        # missing scores: means of other scores
         elif "-" in pileup_qual:
             tempt_counter = 0
             temp_val = 0
@@ -455,23 +459,25 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if pileup_qual[y] == "-":
                     pileup_qual[y] = mean
 
-        # Sub-Loop for genotypes:
-        # Creating genotype list: 1 to 30 (0 to 29)
+        ## For Sub-Loop of genotypes: ii
+        # Creating genotype list: 1 to 30 (Python: 0 to 29)
+        # Keep in Mind: Genotype = VectorPart = State
         temp_list = []
         temp_value = 0
 
-        # case: if reference-base at i is a gap
+        # case: If Reference-Base at i is a Gap
         if upd_reference[i] == "-":
             vector = vector_A  # Keep in mind, Vector A == Vector for gaps!
 
-            # in case gap: genotype values 1 to 15: NaN
+            # In case Ref[i] == "-":  emission prob. for states 1 to 15: NaN
             for ii in range(15):
                 temp_list.append("NaN")
 
             # list values else: 3 if-cases fro every element in pile-up
             for ii in range(15, 30):
 
-                # Checking: case: if Vector at Gap, Gap and >80% of reads are gaps:
+                ## Filter: 
+                # filter-case: if Vector at R[i] == Gap, Genotype == Gap and >80% of reads are gaps:
                 gap_counter = 0
                 for z in range(len(pileup)):
                     if pileup[z] == "-":
@@ -479,8 +485,9 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if vector[ii - 15] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
                     temp_list.append(0)
                     continue
-
-                # NaN-Checking: case in vector part ii is no match with any element from pile-up-list
+                    
+                ## Filter
+                # NaN-Checking: in vector part ii is no match with any element from pile-up-list
                 nan_controll = 0
                 for sub in range(len(pileup)):
                     if vector[ii - 15][0] == pileup[sub] or vector[ii - 15][1] == pileup[sub]:
@@ -490,22 +497,25 @@ def build_emissionmatrix(upd_sam, upd_reference):
                     temp_list.append("NaN")
                     continue
 
-                # Loop over vector
-                # set temp_value to zero for every ii-loop
+                # Loop over Pile-Up
+                ## 3 possible cases: 
                 temp_value = 0
                 for subi in range(len(pileup)):
 
+                    # Case1: PileUp[subi] is in both Elements of Vector Part
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = np.log10(1 - temp_pow)
                         temp_value = temp_value + temp
-
+                    
+                    # Case2: PileUp[subi] is not in both Elements of Vector Part
                     elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                         #   -qscore[subi] / 10 +log10(0.25)
                         temp = (-pileup_qual[subi] / 10 + np.log10(0.25))
                         temp_value = temp_value + temp
 
+                    # Case3: PileUp[subi] is in on Element of Vector Part
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
@@ -517,9 +527,11 @@ def build_emissionmatrix(upd_sam, upd_reference):
             ematrix.append(temp_list)
             temp_list = []
 
-        # case: if reference-base at i is not a gap
+        # Case: If Reference-Base at i is not a Gap
         else:
-            # get vector:
+            # Get Vector:
+            # Keep in Mind: One does not need THIS in case of
+            # a gap, because at gaps, every Vector is the same
             if upd_reference[i] == "A":
                 vector = vector_A
             elif upd_reference[i] == "C":
@@ -529,12 +541,15 @@ def build_emissionmatrix(upd_sam, upd_reference):
             elif upd_reference[i] == "T":
                 vector = vector_T
             else:
-                print("Critical Error at creating emission-matrix!")
+                print("Critical Error at creating emission-matrix! #2349862")
 
+            # Sub-Loop of genotypes: ii
             for ii in range(15):
                 temp_value = 0
 
-                # Checking: case: if Vector at Gap, Gap and >80% of reads are gaps:
+                ## Filter: 
+                # skip loop, if len(read-pileup) is <5 or Reference-Base is a "N"
+                # append -1 as indicator for this case
                 gap_counter = 0
                 for z in range(len(pileup)):
                     if pileup[z] == "-":
@@ -542,8 +557,9 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if vector[ii] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
                     temp_list.append(0)
                     continue
-
-                # NaN-Checking: case in vector part ii is no match with any element from pile-up-list
+                    
+                ## Filter
+                # NaN-Checking: in vector part ii is no match with any element from pile-up-list
                 nan_controll = 0
                 for sub in range(len(pileup)):
                     if vector[ii][0] == pileup[sub] or vector[ii][1] == pileup[sub]:
@@ -553,20 +569,23 @@ def build_emissionmatrix(upd_sam, upd_reference):
                     temp_list.append("NaN")
                     continue
 
-                # Loop over vector
+                # Loop over Pile-Up
                 for subi in range(len(pileup)):
 
+                    # Case1: PileUp[subi] is in both Elements of Vector Part
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = np.log10(1 - temp_pow)
                         temp_value = temp_value + temp
 
+                    # Case2: PileUp[subi] is not in both Elements of Vector Part
                     elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                         #   -qscore[subi] / 10 +log10(0.25)
                         temp = (-pileup_qual[subi] / 10 + np.log10(0.25))
                         temp_value = temp_value + temp
 
+                    # Case3: PileUp[subi] is in on Element of Vector Part
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
@@ -576,6 +595,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
                 temp_list.append(temp_value)
 
+            # In case: Ref[i] != "-": emission prob. for states 15-30: nan
             for ii in range(15, 30):
                 temp_list.append("NaN")
             ematrix.append(temp_list)
