@@ -562,7 +562,7 @@ def viterbi(emission_matrix, transmission_matrix):
     """
 
     # Creating variables:
-    # initialprob: first row of trans-mtarix
+    # initialprob: first row of trans-matrix
     initialprob = transmission_matrix[0]
 
     # Change NaN to -inf
@@ -639,8 +639,7 @@ def viterbi(emission_matrix, transmission_matrix):
                 if max_list[y] != "NaN":
                     # print(y)
                     # print(max_list[y])
-                    max_list[y] = math.log(float(max_list[y]))
-                    print(max_list[y])
+                    max_list[y] = np.log(float(max_list[y]))
                 else:
                     max_list[y] = np.NINF
 
@@ -975,7 +974,7 @@ def main():
     # viterbi
     trans_matrix = create_transition_matrix(
         pre_transition_matrix_simulated, hetrate_simulated)
-    emission_matrix = build_emissionmatrix(upd_sam, updated_refseq)
+    emission_matrix = build_emissionmatrix(updated_sam, updated_refseq)
     xtilde = viterbi(emission_matrix, trans_matrix)
     hidden_states = find_base_state(xtilde, updated_refseq)
 
