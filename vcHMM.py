@@ -1,6 +1,7 @@
 import math
 from scipy.special import logsumexp
 import pysam
+import argparse
 from Bio import SeqIO
 
 import numpy as np
@@ -887,7 +888,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
     return variant_list
 
 
-def create_output_file(values):
+def create_output_file(values, file):
     # add name-column to list
     new_values = []
     for element in values:
@@ -920,9 +921,21 @@ def create_output_file(values):
     head_list.extend(new_values2)
 
     # w file
-    with open("test_file.txt", 'w') as output:
+    with open(file, 'w') as output:
         for element in head_list:
             output.write(str(element) + '\n')
+
+
+def parser():
+    parser = argparse.ArgumentParser(
+        description='Calculating Variants in fasta file')
+    parser.add_argument('i', '--input', nargs='1', help='Input reference file')
+    parser.add_argument('r', '--reads', nargs='1', help='Input sam read file')
+    parser.add_argument('o', '--output', nargs='1', help='Output vcf file')
+
+    args = parser.parse_args()
+
+    return args
 
 
 def main():
@@ -943,7 +956,7 @@ def main():
     #                                   0.6994015911, 0.0017424552],
     #                               [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
 
-    # Heterozygous Rate   
+    # Heterozygous Rate   --->>> why do we need this?
     # For simulated data
     hetrate_simulated = 0.01
     # For real data
@@ -953,9 +966,10 @@ def main():
         pre_transition_matrix_simulated, hetrate_simulated)
 
     # gat data
-    sam = get_sam('data/example.sam')
+    args = parser()
+    sam = get_sam(args.reads)
     # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
-    ref_seq = get_ref_fasta('data/ref.fa')
+    ref_seq = get_ref_fasta(args.input)
     # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
     # get updated data
@@ -981,7 +995,7 @@ def main():
     # varient output
     output = create_variant_calling_output(
         ref_seq, updated_refseq, hidden_states, xtilde)
-    create_output_file(output)
+    create_output_file(output, args.output)
 
-
-main()
+    if __name__ == '__main__':
+        main()
