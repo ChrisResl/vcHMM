@@ -126,7 +126,9 @@ def del_duplicate_ins(insertions):
     """
     Deletes all duplicate insertions from insertion list.
     e.g.
-        [200 2, 200 2, 202 4] -> [200 2, 202 4]
+        [200 2, 200 2, 202 4] -> [200 2, 202 4] 
+        #0: Insertions at Index 200 with len of 2
+        #1: Insertions at Index 202 ...
     """
     insertions = sorted(insertions)
     unique_inserts = {}
@@ -143,7 +145,16 @@ def del_duplicate_ins(insertions):
 
 def update_insertions(insertions):
     """
-    Updates startposition of insertions and returns new insertions
+    Updates Startposition of insertions and returns new insertions.
+    
+    Checks for insertions before the respective insertions to modify 
+    the start position of the respective insertion. 
+    This step is required to align the insertions with the modified 
+    reference genome.
+    
+    e.g. [200 2], 2 10 Insertions before -> [210 2]
+    
+    :return: newsam
     """
     temp = 0
     upd_inserts = {}
@@ -156,7 +167,12 @@ def update_insertions(insertions):
 
 def update_startpos(sam, insertions):
     """
-    updates startposition of reads
+    Updates startposition of reads.
+    
+    Checks for insertions before the read to modify the 
+    start position of the read. 
+    This step is required to align the reads with the modified 
+    reference genome.
     """
     newsam = []
     for read in sam:
@@ -171,6 +187,13 @@ def update_startpos(sam, insertions):
 
 
 def update_reads(sam, insertions):
+    """
+    Gaps are inserted into reads and query quality that
+    originate from insertions of other reads. This is necessary to 
+    correctly align the reads with the modified genome reference.
+    
+    :return: newsam (with external Gaps)
+    """
     newsam = []
     for read in sam:
 
@@ -195,7 +218,7 @@ def update_reads(sam, insertions):
 
 def update_ref(ref_seq, insertions):
     """
-    insertion of gaps into reference sequence
+    Insert gaps into reference sequence from read-cigar-strings.
     """
     for insert in insertions.keys():
         ref_seq = ref_seq[:insert[0]] + \
