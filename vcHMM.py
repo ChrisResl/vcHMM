@@ -123,12 +123,21 @@ def del_duplicate_ins(insertions):
     deletes all duplicate insertions from insertion list
     """
     insertions = sorted(insertions)
-    unique_inserts = [insertions[0]]
-    for i in range(len(insertions) - 1):
-        if insertions[i][0] == insertions[i + 1][0] and insertions[i][1] == insertions[i + 1][1]:
-            continue
+    unique_inserts = {}
+    #  names = []
+    for insert in insertions:
+        insert = [(insert[0], insert[1]), insert[2]]
+        if insert[0] in unique_inserts:
+            unique_inserts[insert[0]].append(insert[1])
         else:
-            unique_inserts.append(insertions[i + 1])
+            unique_inserts[insert[0]] = [insert[1]]
+    # for i in range(len(insertions) - 1):
+    #     if insertions[i][0] != insertions[i + 1][0] or insertions[i][1] != insertions[i + 1][1]:
+    #         unique_inserts.append(
+    #             [insertions[i][0], insertions[i][1], names])
+    #         # insertions[i][2].append(insertions[i + 1][2])
+    #     else:
+    #         names.append(insertions[i][2])
     return unique_inserts
 
 
@@ -137,11 +146,11 @@ def update_insertions(insertions):
     updates startposition of insertions and returns new insertions
     """
     temp = 0
-    upd_inserts = []
-    for insert in insertions:
-        insert = [insert[0] + temp, insert[1], insert[2]]
+    upd_inserts = {}
+    for insert in insertions.keys():
+        insert = [insert[0] + temp, insert[1], insertions[insert]]
         temp += insert[1]
-        upd_inserts.append(insert)
+        upd_inserts[(insert[0], insert[1])] = insert[2]
     return upd_inserts
 
 
@@ -151,7 +160,7 @@ def update_startpos(sam, insertions):
     """
     newsam = []
     for read in sam:
-        for insert in insertions:
+        for insert in insertions.keys():
             if read[0] > insert[0]:
                 read = [read[0] + insert[1], read[1], read[2],
                         read[3], read[4], read[5]]
@@ -165,10 +174,10 @@ def update_reads(sam, insertions):
     newsam = []
     for read in sam:
 
-        for insert in insertions:
+        for insert in insertions.keys():
             gaps_before = 0
             # insert gaps into reads and into query quality
-            if (read[1] != insert[2]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
+            if (read[1] not in insertions[insert]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
                 gaps_before = read[2][:insert[0] - read[0]].count('-')
                 gapped_read = read[2][:insert[0] - read[0] + gaps_before] + \
                     insert[1] * '-' + \
@@ -188,7 +197,7 @@ def update_ref(ref_seq, insertions):
     """
     insertion of gaps into reference sequence
     """
-    for insert in insertions:
+    for insert in insertions.keys():
         ref_seq = ref_seq[:insert[0]] + \
             insert[1] * '-' + ref_seq[insert[0]:]
     return ref_seq
@@ -945,10 +954,10 @@ def main():
         pre_transition_matrix_simulated, hetrate_simulated)
 
     # gat data
-    # sam = get_sam('example.sam')
-    sam = get_sam('data/test_10X_Coverage/read_sort.sam')
-    # ref_seq = get_ref_fasta('ref.fa')
-    ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
+    sam = get_sam('data/example.sam')
+    # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
+    ref_seq = get_ref_fasta('data/ref.fa')
+    # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
     # get updated data
     newsam, insertions = get_cigar(sam)
