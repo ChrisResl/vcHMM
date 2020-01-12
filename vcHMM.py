@@ -799,13 +799,13 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                         # e.g. 2345 A AC
 
                         variants = str(
-                            i) + "\t" + str(ref[i - 1]) + "\t" + str(upd_ref[i - 1]) + str(base_states[i + ii][0])
+                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(base_states[i + ii][0])
 
-                    elif base_states[i + ii][0] != base_states[i + ii][1] and base_states[i + ii][0] != "-" and base_states[i + ii][1] != "-":
+                    elif base_states[i + ii][0] != base_states[i + ii][1] and (base_states[i + ii][0] != "-" and base_states[i + ii][1] != "-"):
                         # e.g. 2345 A AC,AG
 
-                        variants = str(i) + "\t" + str(ref[i - 1]) + "\t" + str(upd_ref[i - 1]) + str(
-                            base_states[i + ii][0]) + "," + str(upd_ref[i - 1]) + str(base_states[i + ii][1])
+                        variants = str(i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(
+                            base_states[i + ii][0]) + "," + str(ref[i - 1]) + str(base_states[i + ii][1])
 
                     elif base_states[i + ii][0] != base_states[i + ii][1] and (base_states[i + ii][0] != "-" or base_states[i + ii][1] != "-"):
                         # e.g. 2345 A AC,A -> only 2345 A AC
@@ -819,14 +819,14 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                             print("Error here. E#778902334")
 
                         variants = str(
-                            i) + "\t" + str(ref[i - 1]) + "\t" + str(upd_ref[i - 1]) + str(temp)
+                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(temp)
 
                     else:
                         print(
                             "This case is not ready yet. Error critical in variant output. #6546547643443")
                 else:
                     # Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
-                    variants = str(variants) + str(base_states[i + ii + 1][0])
+                    variants = str(variants) + str(base_states[i + ii][0])
                 if ii == this_gap_number - 1:
                     variant_list.append(variants)
 
@@ -876,10 +876,10 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: 2 different SNPs
                 #       e.g. 2345 A C,G
                 variants = str(i) + "\t" + str(ref[i]) + "\t" + base_states[i +
-                                                                            gap_counter][0] + "," + base_states[i + gap_counter][1]
+                                                                                gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
 
-    print(len(variant_list))
+    #print(len(variant_list))
     # xtilde_count_14 = xtilde.count(14)
     # xtilde_count_30 = xtilde.count(30)
     # xtilde_count_n = xtilde.count(-1)
