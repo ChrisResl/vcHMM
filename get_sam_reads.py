@@ -231,7 +231,7 @@ def main():
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
     # test
-    for i in range(3100, 3400):
+    for i in range(400):
         bases, _, _ = get_pileup(updated_sam, i)
         print(i, updated_refseq[i], bases)
 

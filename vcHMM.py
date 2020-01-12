@@ -467,7 +467,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
-                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = math.log10(1 - temp_pow)
                         temp_value = temp_value + temp
 
@@ -478,7 +478,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
-                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
                         temp_log = math.log10(temp)
                         temp_value = temp_value + temp_log
@@ -528,7 +528,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
-                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = math.log10(1 - temp_pow)
                         temp_value = temp_value + temp
 
@@ -539,7 +539,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
-                        temp_pow = math.pow(10, (-pileup_qual[subi] / 10))
+                        temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
                         temp_log = math.log10(temp)
                         temp_value = temp_value + temp_log
@@ -587,12 +587,12 @@ def viterbi(emission_matrix, transmission_matrix):
 
         # Case: Initiation:
         #       R[i] == 0 or R[i] != -1 and R[i-1] == -1
-        if i == 0 or emission_matrix[i] != -1 and emission_matrix[i - 1] == -1:
+        if i == 0 or (emission_matrix[i] != -1 and emission_matrix[i - 1] == -1):
             temp_list = []
             temp = 0
             sum = 0
             for ii in range(len(emission_matrix[i])):
-                temp = initialprob[ii] * math.exp(emission_matrix[i][ii])
+                temp = initialprob[ii] * np.exp(emission_matrix[i][ii])
                 temp_list.append(temp)
                 sum = sum + temp
 
@@ -627,27 +627,27 @@ def viterbi(emission_matrix, transmission_matrix):
                 true_temp_list = []
 
             # Get Max-Values
-            temp_max = -float("Inf")
+            temp_max = np.NINF
             max_list = []
             for y in range(30):
                 temp_max = np.max(true_delta_matrix[y])
                 max_list.append(temp_max)
-                temp_max = -float("Inf")
+                temp_max = np.NINF
 
             # log
             for y in range(30):
                 if max_list[y] != "NaN":
                     # print(y)
                     # print(max_list[y])
-                    max_list[y] = np.log(float(max_list[y]))
-                    # print(max_list[y])
+                    max_list[y] = math.log(float(max_list[y]))
+                    print(max_list[y])
                 else:
-                    max_list[y] = -float("inf")
+                    max_list[y] = np.NINF
 
             # plus emission prob
             emmi_list = []
             for y in range(30):
-                if "nan" != max_list:
+                if "nan" != max_list[y]:  # nan to NaN
                     emmi_list.append(
                         float(max_list[y]) + float(emission_matrix[i][y]))
             max_list = []
@@ -658,7 +658,7 @@ def viterbi(emission_matrix, transmission_matrix):
             # Exp and sub. of logsumexp
             temp_list = []
             for y in range(len(emmi_list)):
-                temp_list.append(math.exp(emmi_list[y] - den))
+                temp_list.append(np.exp(emmi_list[y] - den))
 
             delta.append(temp_list)
 
@@ -672,7 +672,7 @@ def viterbi(emission_matrix, transmission_matrix):
             xtilde.append(-1)
             continue
         # Case: Initiation
-        if i == 0 and delta[i] != -1 or delta[i] != -1 and delta[i + 1] == -1:
+        if (i == 0 and delta[i] != -1) or (delta[i] != -1 and delta[i + 1] == -1):
             temp = delta[i].index(np.max(delta[i]))
             xtilde.append(temp)
 
@@ -758,7 +758,7 @@ def find_base_state(xtilde, upd_ref):
     return base_state
 
 
-def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
+def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
 
     variants = ""
     variant_list = []
@@ -880,9 +880,9 @@ def create_varing_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
     print(len(variant_list))
-    xtilde_count_14 = xtilde.count(14)
-    xtilde_count_30 = xtilde.count(30)
-    xtilde_count_n = xtilde.count(-1)
+    # xtilde_count_14 = xtilde.count(14)
+    # xtilde_count_30 = xtilde.count(30)
+    # xtilde_count_n = xtilde.count(-1)
     # print(xtilde_count_14)
     #print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
     return variant_list
@@ -937,18 +937,18 @@ def main():
 
     # This one is pre-transitions-matrix for real data
     # header: MATCH, SNP, Deletion,  Insertion
-    pre_transition_matrix_real = [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
-                                  [0.9499207, 0.04640025,
-                                      0.0014855172, 0.0021934910],
-                                  [0.2879631, 0.01089283,
-                                      0.6994015911, 0.0017424552],
-                                  [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
+    # pre_transition_matrix_real = [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
+    #                               [0.9499207, 0.04640025,
+    #                                   0.0014855172, 0.0021934910],
+    #                               [0.2879631, 0.01089283,
+    #                                   0.6994015911, 0.0017424552],
+    #                               [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
 
     # Heterozygous Rate   --->>> why do we need this?
     # For simulated data
     hetrate_simulated = 0.01
     # For real data
-    hetrate_real = 0.001
+    # hetrate_real = 0.001
 
     test_transmatrix = create_transition_matrix(
         pre_transition_matrix_simulated, hetrate_simulated)
@@ -967,10 +967,10 @@ def main():
     updated_sam = update_reads(upd_sam, upd_inserts)
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
-    for i in range(340, 361):
-        print(i, "   ", get_pileup(updated_sam, i))
+    # for i in range(340, 361):
+    #     print(i, "   ", get_pileup(updated_sam, i))
 
-    print(updated_refseq[340:360])
+    # print(updated_refseq[340:360])
 
     # viterbi
     trans_matrix = create_transition_matrix(
@@ -980,7 +980,7 @@ def main():
     hidden_states = find_base_state(xtilde, updated_refseq)
 
     # varient output
-    output = create_varing_calling_output(
+    output = create_variant_calling_output(
         ref_seq, updated_refseq, hidden_states, xtilde)
     create_output_file(output)
 
