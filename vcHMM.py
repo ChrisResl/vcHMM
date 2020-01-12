@@ -795,26 +795,26 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 # Handle the gaps:
                 # Case: multiple Insertions in a row
                 if ii == 0:
-                    if base_states[i + ii][0] == base_states[i + ii][1]:
+                    if base_states[i + ii + gap_counter][0] == base_states[i + ii + gap_counter - this_gap_number][1]:
                         # e.g. 2345 A AC
 
                         variants = str(
-                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(base_states[i + ii][0])
+                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(base_states[i + ii  + gap_counter - this_gap_number][0])
 
-                    elif base_states[i + ii][0] != base_states[i + ii][1] and (base_states[i + ii][0] != "-" and base_states[i + ii][1] != "-"):
+                    elif base_states[i + ii  + gap_counter - this_gap_number][0] != base_states[i + ii  + gap_counter - this_gap_number][1] and (base_states[i + ii  + gap_counter - this_gap_number][0] != "-" and base_states[i + ii  + gap_counter - this_gap_number][1] != "-"):
                         # e.g. 2345 A AC,AG
 
                         variants = str(i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(
-                            base_states[i + ii][0]) + "," + str(ref[i - 1]) + str(base_states[i + ii][1])
+                            base_states[i + ii  + gap_counter - this_gap_number][0]) + "," + str(ref[i - 1]) + str(base_states[i + ii  + gap_counter - this_gap_number][1])
 
-                    elif base_states[i + ii][0] != base_states[i + ii][1] and (base_states[i + ii][0] != "-" or base_states[i + ii][1] != "-"):
+                    elif base_states[i + ii  + gap_counter - this_gap_number][0] != base_states[i + ii  + gap_counter - this_gap_number][1] and (base_states[i + ii  + gap_counter - this_gap_number][0] != "-" or base_states[i + ii  + gap_counter - this_gap_number][1] != "-"):
                         # e.g. 2345 A AC,A -> only 2345 A AC
 
                         temp = ""
-                        if base_states[i + ii][0] != "-":
-                            temp = str(base_states[i + ii][0])
-                        elif base_states[i + ii][1] != "-":
-                            temp = str(base_states[i + ii][1])
+                        if base_states[i + ii  + gap_counter - this_gap_number][0] != "-":
+                            temp = str(base_states[i + ii  + gap_counter - this_gap_number][0])
+                        elif base_states[i + ii  + gap_counter - this_gap_number][1] != "-":
+                            temp = str(base_states[i + ii  + gap_counter - this_gap_number][1])
                         else:
                             print("Error here. E#778902334")
 
@@ -826,7 +826,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                             "This case is not ready yet. Error critical in variant output. #6546547643443")
                 else:
                     # Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
-                    variants = str(variants) + str(base_states[i + ii][0])
+                    variants = str(variants) + str(base_states[i + ii  + gap_counter - this_gap_number][0])
                 if ii == this_gap_number - 1:
                     variant_list.append(variants)
 
