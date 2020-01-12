@@ -469,19 +469,19 @@ def build_emissionmatrix(upd_sam, upd_reference):
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
-                        temp = math.log10(1 - temp_pow)
+                        temp = np.log10(1 - temp_pow)
                         temp_value = temp_value + temp
 
                     elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                         #   -qscore[subi] / 10 +log10(0.25)
-                        temp = (-pileup_qual[subi] / 10 + math.log10(0.25))
+                        temp = (-pileup_qual[subi] / 10 + np.log10(0.25))
                         temp_value = temp_value + temp
 
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
-                        temp_log = math.log10(temp)
+                        temp_log = np.log10(temp)
                         temp_value = temp_value + temp_log
 
                 temp_list.append(temp_value)
@@ -530,19 +530,19 @@ def build_emissionmatrix(upd_sam, upd_reference):
                     if vector[ii - 15][0] == pileup[subi] and vector[ii - 15][1] == pileup[subi]:
                         #   log10(1 - 10 ^ (-qscore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
-                        temp = math.log10(1 - temp_pow)
+                        temp = np.log10(1 - temp_pow)
                         temp_value = temp_value + temp
 
                     elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                         #   -qscore[subi] / 10 +log10(0.25)
-                        temp = (-pileup_qual[subi] / 10 + math.log10(0.25))
+                        temp = (-pileup_qual[subi] / 10 + np.log10(0.25))
                         temp_value = temp_value + temp
 
                     else:
                         #   log10(0.5*(1-10^(-qscore[subi]/10)) + 0.125*10^(-qsccore[subi] / 10))
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = 0.5 * (1 - temp_pow) + 0.125 * temp_pow
-                        temp_log = math.log10(temp)
+                        temp_log = np.log10(temp)
                         temp_value = temp_value + temp_log
 
                 temp_list.append(temp_value)
