@@ -836,7 +836,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: Complete Deletion / Deletion on both Strings
                 #       e.g. 2345 CG C
                 variants = str(
-                    i + 1) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
+                    i) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == "-" or base_states[i + gap_counter][1] == "-":
@@ -850,7 +850,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 else:
                     print("Error. #78932784")
 
-                variants = str(i + 1) + "\t" + str(ref[i - 1]) + str(
+                variants = str(i) + "\t" + str(ref[i - 1]) + str(
                     ref[i]) + "\t" + str(ref[i - 1]) + temp + "," + str(ref[i - 1])
                 variant_list.append(variants)
 
@@ -858,7 +858,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: SNP is equal on both strings
                 #       e.g. 2345 A C  Genotype: [C, C]
                 variants = str(
-                    i + 1) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
+                    i) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == upd_ref[i + gap_counter] or base_states[i + gap_counter][1] == upd_ref[i + gap_counter]:
@@ -869,13 +869,13 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                     temp = str(base_states[i + gap_counter][0])
                 elif base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
                     temp = str(base_states[i + gap_counter][1])
-                variants = str(i + 1) + "\t" + str(ref[i]) + "\t" + temp
+                variants = str(i) + "\t" + str(ref[i]) + "\t" + temp
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] != upd_ref[i + gap_counter] and base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
                 # Case: 2 different SNPs
                 #       e.g. 2345 A C,G
-                variants = str(i + 1) + "\t" + str(ref[i]) + "\t" + base_states[i +
+                variants = str(i) + "\t" + str(ref[i]) + "\t" + base_states[i +
                                                                                 gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
 
