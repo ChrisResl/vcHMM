@@ -9,9 +9,9 @@ import numpy as np
 
 def get_ref_fasta(file_name):
     """
-    reads a fasta-file and return the first sequence.
-    Needs: a full file-name, e.g. : ref.fa
-    :return: DNA-Sequence (as String) of a given fasta-file
+    Reads a fasta-file and return the first DNA-Sequence.
+    Needs: a full file-name, e.g. : ref.fa 
+    :return: DNA-Sequence (as String) of a given fasta-file.
     """
     record_dict = list(SeqIO.parse(file_name, "fasta"))
     return record_dict[0].seq
@@ -19,9 +19,10 @@ def get_ref_fasta(file_name):
 
 def get_sam(samfile):
     """
-    reads a sam-file and returns a list with startposition, readnames,
-    readsequence, [cigarstring as tuples], [queryqualities].
-    return: All sorted reads from given sam-file.
+    Reads a sam-file and returns a list with startposition, readnames,
+    readsequence, [cigarstring as tuples], [queryqualities] and mapquality.
+    Needs: a full file-name, e.g. : ref.fa 
+    :return: All sorted reads from given sam-file.
     """
     samfile = pysam.AlignmentFile(samfile, "rb")
     sam = []
@@ -34,8 +35,10 @@ def get_sam(samfile):
 
 def get_cigar(sam):
     """
-    cuts out the hard and soft clipped entries from read sequence and/or cigar string
-    and gets the insertion- and deletion positions to update reads and query qualities
+    Cuts out the hard and soft clipped entries from read sequence and/or cigar string
+    and gets the insertion- and deletion positions to update reads and query qualities.
+    Needs: sam-reads-variable from get_sam
+    :return: newsam und insertions-list (locations and legth)
     """
     newsam = []
     insertions = []
@@ -121,30 +124,26 @@ def get_cigar(sam):
 
 def del_duplicate_ins(insertions):
     """
-    deletes all duplicate insertions from insertion list
+    Deletes all duplicate insertions from insertion list.
+    e.g.
+        [200 2, 200 2, 202 4] -> [200 2, 202 4]
     """
     insertions = sorted(insertions)
     unique_inserts = {}
-    #  names = []
+
     for insert in insertions:
         insert = [(insert[0], insert[1]), insert[2]]
         if insert[0] in unique_inserts:
             unique_inserts[insert[0]].append(insert[1])
         else:
             unique_inserts[insert[0]] = [insert[1]]
-    # for i in range(len(insertions) - 1):
-    #     if insertions[i][0] != insertions[i + 1][0] or insertions[i][1] != insertions[i + 1][1]:
-    #         unique_inserts.append(
-    #             [insertions[i][0], insertions[i][1], names])
-    #         # insertions[i][2].append(insertions[i + 1][2])
-    #     else:
-    #         names.append(insertions[i][2])
+
     return unique_inserts
 
 
 def update_insertions(insertions):
     """
-    updates startposition of insertions and returns new insertions
+    Updates startposition of insertions and returns new insertions
     """
     temp = 0
     upd_inserts = {}
