@@ -876,7 +876,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 # Case: 2 different SNPs
                 #       e.g. 2345 A C,G
                 variants = str(i) + "\t" + str(ref[i]) + "\t" + base_states[i +
-                                                                                gap_counter][0] + "," + base_states[i + gap_counter][1]
+                                                                            gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
 
     print(len(variant_list))
@@ -929,9 +929,12 @@ def create_output_file(values, file):
 def parser():
     parser = argparse.ArgumentParser(
         description='Calculating Variants in fasta file')
-    parser.add_argument('i', '--input', nargs='1', help='Input reference file')
-    parser.add_argument('r', '--reads', nargs='1', help='Input sam read file')
-    parser.add_argument('o', '--output', nargs='1', help='Output vcf file')
+    parser.add_argument('-i', '--input', type=str,
+                        help='Input reference file', required=True)
+    parser.add_argument('-r', '--reads', type=str,
+                        help='Input sam read file', required=True)
+    parser.add_argument('-o', '--output', type=str,
+                        help='Output vcf file', required=True)
 
     args = parser.parse_args()
 
@@ -997,5 +1000,6 @@ def main():
         ref_seq, updated_refseq, hidden_states, xtilde)
     create_output_file(output, args.output)
 
-    if __name__ == '__main__':
-        main()
+
+if __name__ == '__main__':
+    main()
