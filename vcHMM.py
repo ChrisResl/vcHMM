@@ -606,16 +606,22 @@ def build_emissionmatrix(upd_sam, upd_reference):
 
 def viterbi(emission_matrix, transmission_matrix):
     """
+    Does Vitervi Hidden Markov for a given transition and emission matrix.
+    2 Parts.
+    -Viterbi
+    -Xtilde
+    
     :param emission_matrix:
     :param transmission_matrix:
-    :return:
+    :return: xtilde (path of most likely Hidden States)
     """
 
-    # Creating variables:
+    ## Creating variables:
     # initialprob: first row of trans-matrix
     initialprob = transmission_matrix[0]
-
-    # Change NaN to -inf
+    delta = []
+    
+    # Change NaN to -inf (np.NINF)
     for i in range(len(emission_matrix)):
         if emission_matrix[i] == -1:
             continue
@@ -623,20 +629,32 @@ def viterbi(emission_matrix, transmission_matrix):
             if emission_matrix[i][j] == "NaN":
                 emission_matrix[i][j] = np.NINF
 
-    delta = []
-
-    # Run Viterbi
-    # Important:  if in Ri is on list, but == -1 -> skip this part.
-    #             if skip part because of -1: use initialprob for first next element != -1 in Ri
+    
+    ####################
+    #### Run Viterbi ###
+    ####################
+    
+    # Important:  if -1 -> skip this part and.
+    #             if skip because of -1: use initialprob for first next element != -1 in Ri
     for i in range(len(emission_matrix)):
-
-        # Case: -1 / skip
+        
+        ## Case: -1 / skip
+        # append -1 as indicator for -1
+        # e.g.
+        #   x x x -1  x x x x x x ...
+        #   z z z  s  y y y y y ...
+        #   z z z  k  y y y y ...
+        #   z z z  i  y y y y ...
+        #   z z z  p  y y y y ...
+        #
+        # Why: Every -1 cases cut the matrix. Each part must be calculated separately.
         if emission_matrix[i] == -1:
             delta.append(-1)
             continue
 
-        # Case: Initiation:
-        #       R[i] == 0 or R[i] != -1 and R[i-1] == -1
+        ## Case: Initialization
+        #   R[i] == 0 or (R[i] != -1 and R[i-1] == -1)
+        #   This starts a separately calculation 
         if i == 0 or (emission_matrix[i] != -1 and emission_matrix[i - 1] == -1):
             temp_list = []
             temp = 0
@@ -651,10 +669,14 @@ def viterbi(emission_matrix, transmission_matrix):
             delta.append(temp_list)
 
         # Case: Consecutive sequence
-        #   -e.g.  ACGTACGT, without N / -1
-        # Create matrix from delta-1
+        #   -e.g.  ACGTACGT, without -1
         else:
             delta_matrix = []
+            # Keep in mind: delta_matrix != delta
+            # delta_matrix :         a temp. Matrix for calculation
+            # true_delta_matrix :    a temp. Matrix for calculation
+            # delta:                 saves solutions of needed calculations
+            
             true_delta_matrix = []
             true_temp = 0
             true_temp_list = []
@@ -676,7 +698,13 @@ def viterbi(emission_matrix, transmission_matrix):
                 true_delta_matrix.append(true_temp_list)
                 true_temp_list = []
 
-            # Get Max-Values
+            # Get Max-Values from true_delta_matrix-rows
+            # e.g.
+            # [1,2,3,4] -> [4,
+            # [2,3,4,5] ->  5,
+            # [4,3,2,1] ->  4,
+            # [5,5,5,7] ->  7]
+            # Input Matrix, Output List
             temp_max = np.NINF
             max_list = []
             for y in range(30):
@@ -684,7 +712,7 @@ def viterbi(emission_matrix, transmission_matrix):
                 max_list.append(temp_max)
                 temp_max = np.NINF
 
-            # log
+            # Get Log-Values from Max-Values(List)
             for y in range(30):
                 if max_list[y] != "NaN":
                     # print(y)
@@ -693,7 +721,7 @@ def viterbi(emission_matrix, transmission_matrix):
                 else:
                     max_list[y] = np.NINF
 
-            # plus emission prob
+            # Every value(in list) plus emission prob.
             emmi_list = []
             for y in range(30):
                 if "nan" != max_list[y]:  # nan to NaN
@@ -701,26 +729,41 @@ def viterbi(emission_matrix, transmission_matrix):
                         float(max_list[y]) + float(emission_matrix[i][y]))
             max_list = []
 
-            # logsumexp:
+            # Logsumexp:
+            # First exp, than sum of list and log
+            # get a single value
             den = logsumexp(emmi_list)
 
-            # Exp and sub. of logsumexp
+            # Exp of every value(list) and sub. of logsumexp
             temp_list = []
             for y in range(len(emmi_list)):
                 temp_list.append(np.exp(emmi_list[y] - den))
 
             delta.append(temp_list)
 
-    # Get xtilde
+    
+    ####################
+    #### Get xtilde  ###
+    ####################
+    # Get Path of Hidden Satets
+    # Get most likely Hidden States as a List
+    
     xtilde = []
+    # reverse, bacuse xtilde is done backwards
     delta.reverse()
 
     for i in (range(len(delta))):
-        # Case: skip
+        # Case: Skip
+        #   x x x -1  x x x x x x ...
+        #   z z z  s  y y y y y ...
+        #   z z z  k  y y y y ...
+        #   z z z  i  y y y y ...
+        #   z z z  p  y y y y ...
         if delta[i] == -1:
             xtilde.append(-1)
             continue
-        # Case: Initiation
+            
+        # Case: Initialization of new Sub-Part
         if (i == 0 and delta[i] != -1) or (delta[i] != -1 and delta[i + 1] == -1):
             temp = delta[i].index(np.max(delta[i]))
             xtilde.append(temp)
@@ -762,7 +805,7 @@ def find_base_state(xtilde, upd_ref):
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
 
-    #keep in mind:  Vector for Base A = Vector for Base "-"
+    #Keep in Mind:  Vector for Base A = Vector for Base "-"
     vector_A_ex = vector_A
     vector_A_ex.extend(vector_A)
 
@@ -777,7 +820,9 @@ def find_base_state(xtilde, upd_ref):
 
     # Loop over updated reference:
     for i in range(len(upd_ref)):
-        # Case: xtilde(i) == -1: skip this, just base = base
+        
+        # Case: xtilde(i) == -1: 
+        #   skip this, base = -1
         if xtilde[i] == -1:
             base_state.append(-1)
 
@@ -797,13 +842,16 @@ def find_base_state(xtilde, upd_ref):
 
             elif upd_ref[i] == "N":
                 base_state.append(upd_ref[i])
+                print("Error. #9872536")
+                # If this Error: Ns are forbidden.
+                # Change logic request for selection.
 
             elif upd_ref[i] == "-":
                 base_state.append(vector_A_ex[xtilde[i]])
 
             else:
-                print("Critical Error at def: find_base_state. Unknown Base at Position ",
-                      i, " in updated Reference!")
+                print("Critical Error. Unknown Base at Position ",
+                      i, " in updated Reference! #666987")
                 base_state.append(upd_ref[i])
 
     print("States are done.")
