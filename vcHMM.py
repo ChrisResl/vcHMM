@@ -742,15 +742,17 @@ def viterbi(emission_matrix, transmission_matrix):
 
 def find_base_state(xtilde, upd_ref):
     """
-    This code finds the base state at every position of updated reference.
-    e.g. at R(i = 7) base is gap, and there are only Gs within the reads: -> Base State is [G, G]
-    :param xtilde:  Hidden State at position Ri
-    :param upd_ref: Reference Genome with gaps
-    :return:
+    Finds the most likely genotypes / Base State at every position of updated reference.
+    
+    e.g. at R[i] Base is G and hidden state(from xtilde) is 1: -> Base State is [G, G]
+    
+    :param xtilde:  Hidden State of Genome Reference
+    :param upd_ref: Genome Reference with Gaps
+    :return: base_states
     """
     base_state = []
 
-    # Builds Vectors:
+    ### Creating Genotype-Vectors / Hidden-State-Vectors
     vector_A = [["A", "A"], ["C", "C"], ["G", "G"], ["T", "T"], ["A", "C"], ["A", "G"], ["A", "T"], ["A", "-"],
                 ["C", "G"], ["C", "T"], ["C", "-"], ["G", "T"], ["G", "-"], ["T", "-"], ["-", "-"]]
     vector_C = [["C", "C"], ["A", "A"], ["G", "G"], ["T", "T"], ["A", "C"], ["C", "G"], ["C", "T"], ["C", "-"],
@@ -760,6 +762,7 @@ def find_base_state(xtilde, upd_ref):
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
 
+    #keep in mind:  Vector for Base A = Vector for Base "-"
     vector_A_ex = vector_A
     vector_A_ex.extend(vector_A)
 
@@ -803,7 +806,7 @@ def find_base_state(xtilde, upd_ref):
                       i, " in updated Reference!")
                 base_state.append(upd_ref[i])
 
-    print("Hidden States are done.")
+    print("States are done.")
     return base_state
 
 
