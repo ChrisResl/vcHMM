@@ -877,7 +877,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
             continue
 
         elif upd_ref[i + gap_counter] == "-":
-            # Case: Gaps Insertions in updated reference
+            ### Case: Gaps Insertions in updated reference
             #       Hidden States: 16 - 29
             gap_counter = gap_counter + 1
             this_gap_number = 1
@@ -893,7 +893,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
 
             for ii in range(this_gap_number):
                 # Handle the gaps:
-                # Case: multiple Insertions in a row
+                ### Case: multiple Insertions in a row
                 if ii == 0:
                     if base_states[i + ii + gap_counter][0] == base_states[i + ii + gap_counter - this_gap_number][1]:
                         # e.g. 2345 A AC
@@ -923,24 +923,24 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
 
                     else:
                         print(
-                            "This case is not ready yet. Error critical in variant output. #6546547643443")
+                            "Error critical in variant output. #6546547643443")
                 else:
-                    # Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
+                    ### Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
                     variants = str(variants) + str(base_states[i + ii  + gap_counter - this_gap_number][0])
                 if ii == this_gap_number - 1:
                     variant_list.append(variants)
 
         elif upd_ref[i + gap_counter] != "-":
-            # Case: Deletion or SNP
+            ### Case: Deletion or SNP
             if xtilde[i + gap_counter] == 14:
-                # Case: Complete Deletion / Deletion on both Strings
+                ### Case: Complete Deletion / Deletion on both Strings
                 #       e.g. 2345 CG C
                 variants = str(
                     i) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == "-" or base_states[i + gap_counter][1] == "-":
-                # Case: Deletion only on one String, base is conserved on other string or SNP.
+                ### Case: Deletion only on one String, base is conserved on other string or SNP.
                 #       e.g. 2345 CG CA, C
                 temp = 0
                 if base_states[i + gap_counter][0] != "-":
@@ -955,14 +955,14 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == base_states[i + gap_counter][1]:
-                # Case: SNP is equal on both strings
+                ### Case: SNP is equal on both strings
                 #       e.g. 2345 A C  Genotype: [C, C]
                 variants = str(
                     i) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == upd_ref[i + gap_counter] or base_states[i + gap_counter][1] == upd_ref[i + gap_counter]:
-                # Case: SNP only on one string
+                ### Case: SNP only on one string
                 #     e.g. 2345 A C    Genotype: [A, C]
                 temp = 0
                 if base_states[i + gap_counter][0] != upd_ref[i + gap_counter]:
@@ -973,30 +973,28 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] != upd_ref[i + gap_counter] and base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
-                # Case: 2 different SNPs
+                ### Case: 2 different SNPs
                 #       e.g. 2345 A C,G
                 variants = str(i) + "\t" + str(ref[i]) + "\t" + base_states[i +
                                                                                 gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
-
-    #print(len(variant_list))
-    # xtilde_count_14 = xtilde.count(14)
-    # xtilde_count_30 = xtilde.count(30)
-    # xtilde_count_n = xtilde.count(-1)
-    # print(xtilde_count_14)
-    #print(len(xtilde) - xtilde_count_30 - xtilde_count_n)
+                
     return variant_list
 
 
 def create_output_file(values, file):
-    # add name-column to list
+    """
+    Creates a VCF-File.
+    Name is for sim. Data, change it for other Data.
+    """
+    # Add name-column to list
     new_values = []
     for element in values:
         print(element)
         temp = "simref\t" + element
         new_values.append(temp)
 
-    # add id-column
+    # Add id-column
     new_values2 = []
     id_column_value = "\t.\t"
     needle = "\t"
@@ -1010,7 +1008,7 @@ def create_output_file(values, file):
             new_values[i][start + 1:len(new_values[i])]
         new_values2.append(temp)
 
-    # add header
+    # Add Headlines and infos
     head_list = []
     meta_info = "##fileformat=VCFv4.0"
     head_list.append(meta_info)
@@ -1020,13 +1018,16 @@ def create_output_file(values, file):
 
     head_list.extend(new_values2)
 
-    # w file
+    # Create file
     with open(file, 'w') as output:
         for element in head_list:
             output.write(str(element) + '\n')
 
 
 def parser():
+    """
+    Allows to use the tool from the command line.
+    """
     parser = argparse.ArgumentParser(
         description='Calculating Variants in fasta file')
     parser.add_argument('-i', '--input', type=str,
