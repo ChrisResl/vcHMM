@@ -1043,39 +1043,38 @@ def parser():
 
 def main():
 
-    # This one is pre-transition-matrix for example
-    # header: MATCH, SNP, Deletion,  Insertion
+    #### Create Variables:
+    ## T-Matrix:
+    # This one is pre-transition-matrix for simulated data:
+    # header:                          MATCH, SNP, Deletion,  Insertion
     pre_transition_matrix_simulated = [[0.988, 0.008, 0.002, 0.002],
                                        [0.53, 0.45, 0.01, 0.01],
                                        [0.70, 0.15, 0.15, 0.0],
                                        [0.70, 0.15, 0.0, 0.15]]
 
     # This one is pre-transitions-matrix for real data
-    # header: MATCH, SNP, Deletion,  Insertion
-    # pre_transition_matrix_real = [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
-    #                               [0.9499207, 0.04640025,
-    #                                   0.0014855172, 0.0021934910],
-    #                               [0.2879631, 0.01089283,
-    #                                   0.6994015911, 0.0017424552],
-    #                               [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
+    # header:                       MATCH,      SNP,        Deletion,     Insertion
+    pre_transition_matrix_real =  [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
+                                   [0.9499207, 0.04640025,
+                                       0.0014855172, 0.0021934910],
+                                   [0.2879631, 0.01089283,
+                                       0.6994015911, 0.0017424552],
+                                   [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
 
-    # Heterozygous Rate   --->>> why do we need this?
-    # For simulated data
+    ## Heterozygous Rate
+    # For simulated data:
     hetrate_simulated = 0.01
     # For real data
-    # hetrate_real = 0.001
+    hetrate_real = 0.001
 
-    test_transmatrix = create_transition_matrix(
-        pre_transition_matrix_simulated, hetrate_simulated)
-
-    # gat data
+    #### Get Data
     args = parser()
     sam = get_sam(args.reads)
     # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
     ref_seq = get_ref_fasta(args.input)
     # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
-    # get updated data
+    #### Get Updated Data
     newsam, insertions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
     upd_inserts = update_insertions(unique_inserts)
@@ -1083,19 +1082,15 @@ def main():
     updated_sam = update_reads(upd_sam, upd_inserts)
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
-    # for i in range(340, 361):
-    #     print(i, "   ", get_pileup(updated_sam, i))
 
-    # print(updated_refseq[340:360])
-
-    # viterbi
+    #### Viterbi
     trans_matrix = create_transition_matrix(
         pre_transition_matrix_simulated, hetrate_simulated)
     emission_matrix = build_emissionmatrix(updated_sam, updated_refseq)
     xtilde = viterbi(emission_matrix, trans_matrix)
     hidden_states = find_base_state(xtilde, updated_refseq)
 
-    # varient output
+    #### Varient Output
     output = create_variant_calling_output(
         ref_seq, updated_refseq, hidden_states, xtilde)
     create_output_file(output, args.output)
