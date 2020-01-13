@@ -10,7 +10,7 @@ import numpy as np
 def get_ref_fasta(file_name):
     """
     Reads a fasta-file and return the first DNA-Sequence.
-    Needs: a full file-name, e.g. : ref.fa 
+    Needs: a full file-name, e.g. : ref.fa
     :return: DNA-Sequence (as String) of a given fasta-file.
     """
     record_dict = list(SeqIO.parse(file_name, "fasta"))
@@ -21,7 +21,7 @@ def get_sam(samfile):
     """
     Reads a sam-file and returns a list with startposition, readnames,
     readsequence, [cigarstring as tuples], [queryqualities] and mapquality.
-    Needs: a full file-name, e.g. : ref.fa 
+    Needs: a full file-name, e.g. : ref.fa
     :return: All sorted reads from given sam-file.
     """
     samfile = pysam.AlignmentFile(samfile, "rb")
@@ -112,21 +112,20 @@ def get_cigar(sam):
                         read[5][pos + gaps_before:]
                     read = [read[0], read[1], updated_read,
                             read[3], read[4], updated_qual]
-    #                deletions.append([read[1], pos, operation[1]])
                 pos += operation[1]
 
         readnames.append(read[1])
 
         newsam.append(read)
 
-    return newsam, insertions  # , deletions
+    return newsam, insertions
 
 
 def del_duplicate_ins(insertions):
     """
     Deletes all duplicate insertions from insertion list.
     e.g.
-        [200 2, 200 2, 202 4] -> [200 2, 202 4] 
+        [200 2, 200 2, 202 4] -> [200 2, 202 4]
         #0: Insertions at Index 200 with len of 2
         #1: Insertions at Index 202 ...
     """
@@ -146,14 +145,14 @@ def del_duplicate_ins(insertions):
 def update_insertions(insertions):
     """
     Updates Startposition of insertions and returns new insertions.
-    
-    Checks for insertions before the respective insertions to modify 
-    the start position of the respective insertion. 
-    This step is required to align the insertions with the modified 
+
+    Checks for insertions before the respective insertions to modify
+    the start position of the respective insertion.
+    This step is required to align the insertions with the modified
     reference genome.
-    
+
     e.g. [200 2], 10 Insertions before -> [210 2]
-    
+
     :return: newsam
     """
     temp = 0
@@ -168,10 +167,10 @@ def update_insertions(insertions):
 def update_startpos(sam, insertions):
     """
     Updates startposition of reads.
-    
-    Checks for insertions before the read to modify the 
-    start position of the read. 
-    This step is required to align the reads with the modified 
+
+    Checks for insertions before the read to modify the
+    start position of the read.
+    This step is required to align the reads with the modified
     reference genome.
     """
     newsam = []
@@ -189,25 +188,27 @@ def update_startpos(sam, insertions):
 def update_reads(sam, insertions):
     """
     Gaps are inserted into reads and query quality that
-    originate from insertions of other reads. This is necessary to 
+    originate from insertions of other reads. This is necessary to
     correctly align the reads with the modified genome reference.
-    
+
     :return: newsam (with external Gaps)
     """
     newsam = []
     for read in sam:
 
         for insert in insertions.keys():
-            gaps_before = 0
+            deletions = 0
             # insert gaps into reads and into query quality
             if (read[1] not in insertions[insert]) and (insert[0] >= read[0]) and (insert[0] - read[0] <= len(read[2])):
-                gaps_before = read[2][:insert[0] - read[0]].count('-')
-                gapped_read = read[2][:insert[0] - read[0] + gaps_before] + \
+                for operation in read[3]:
+                    if operation[0] == 2:
+                        deletions += operation[1]
+                gapped_read = read[2][:insert[0] - read[0] + deletions] + \
                     insert[1] * '-' + \
-                    read[2][insert[0] - read[0] + gaps_before:]
-                changed_qual = read[5][:insert[0] - read[0] + gaps_before] + \
+                    read[2][insert[0] - read[0] + deletions:]
+                changed_qual = read[5][:insert[0] - read[0] + deletions] + \
                     insert[1] * ['-'] + \
-                    read[5][insert[0] - read[0] + gaps_before:]
+                    read[5][insert[0] - read[0] + deletions:]
                 read = [read[0], read[1], gapped_read,
                         read[3], read[4], changed_qual]
 
@@ -230,13 +231,13 @@ def update_ref(ref_seq, insertions):
 
 def get_pileup(samfile, pileupposition):
     """
-    Get all read bases, qualities and mapq for a given reference position. 
-    Needs:  samfile(with all kind of modifications from before!), 
-            pileupposition(Reference-Positions) 
-    
+    Get all read bases, qualities and mapq for a given reference position.
+    Needs:  samfile(with all kind of modifications from before!),
+            pileupposition(Reference-Positions)
+
     e.g.
         R[2] -> ["A", "A", "A", "C", "C", "C"], [22, 12, 23, 20, 18, 21],  [18, 19, 17, 23, 20, 19]
-    
+
     :return: bases, qualities and mapping_qualities (mapq)
     """
     bases = []
@@ -254,13 +255,13 @@ def get_pileup(samfile, pileupposition):
 
 def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
     """
-    Calculates a row of the transition Matrix, given a 
+    Calculates a row of the transition Matrix, given a
     "pre transition matrix" and a hetrate.
     Keep in Mind:
-        - Pre Transition Matrix: only 4 hidden States, because 
+        - Pre Transition Matrix: only 4 hidden States, because
         for predicting heterozygous polymorphism,
         one needs a more advanced Transition Matrix
-        - States are 1-based, python-code is 0-based 
+        - States are 1-based, python-code is 0-based
             -> transrow(30) = row_transition_matrix[29]
 
      :return:  A single row for the Transition Matrix
@@ -268,7 +269,7 @@ def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
 
     m = 30
     row_transition_matrix = [-1 for i in range(m)]
-    
+
     # transrow(30) = tprobi(4) * hetrate/32;
     row_transition_matrix[29] = vector_of_pre_transition_matrix[3] * hetrate / 32
 
@@ -324,20 +325,20 @@ def create_row_transition_matrix(vector_of_pre_transition_matrix, hetrate):
 
 def create_transition_matrix(pre_transition_matrix, hetrate):
     """
-    
+
     """
-    
+
     # size of transition matrix: m
     m = 30
     # = [[-1 for i in range(m)] for j in range(m)]
     transition_matrix = [-1 for i in range(m)]
 
-    ### This one: MATCH
+    # This one: MATCH
     #  (1,:)= buildTrans(tprob(1,:), hetrate);
     transition_matrix[0] = create_row_transition_matrix(
         pre_transition_matrix[0], hetrate)
 
-    ### This one: SNP
+    # This one: SNP
     # transitionmatrix(2,:)= buildTrans(tprob(2,:),hetrate);
     transition_matrix[1] = create_row_transition_matrix(
         pre_transition_matrix[1], hetrate)
@@ -352,12 +353,12 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
     for i in ([2, 3, 4, 5, 6, 8, 9, 11]):
         transition_matrix[i] = transition_matrix[1]
 
-    ### This one: Full-Delition
+    # This one: Full-Delition
     # transitionmatrix(15,:) = buildTrans(tprob(3,:), hetrate);
     transition_matrix[14] = create_row_transition_matrix(
         pre_transition_matrix[2], hetrate)
 
-    ### Part-Deletions: this are all Genotypes with ONE GAP (deletion). 
+    # Part-Deletions: this are all Genotypes with ONE GAP (deletion).
     #   order is NOT the same as the paper, but same as in Matlab
     # transitionmatrix(8,:) = (transitionmatrix(2,:)+transitionmatrix(15,:))/2;
     # transitionmatrix(11,:) = transitionmatrix(8,:);
@@ -370,7 +371,7 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
             transition_matrix[i][j] = (
                 transition_matrix[1][j] + transition_matrix[14][j]) / 2
 
-    ### This are: INSERTIONs
+    # This are: INSERTIONs
     # transitionmatrix(16,:) = buildTrans(tprob(4,:),hetrate);
     # transitionmatrix(17,:) = transitionmatrix(16,:);
     # transitionmatrix(18,:) = transitionmatrix(16,:);
@@ -390,7 +391,7 @@ def create_transition_matrix(pre_transition_matrix, hetrate):
     for i in range(16, 29):
         transition_matrix[i] = transition_matrix[15]
 
-    ### This one: Invalid State
+    # This one: Invalid State
     transition_matrix[29] = [1 / 30 for i in range(m)]
 
     return transition_matrix
@@ -405,7 +406,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
     :param mapq_list:
     :return: Emission Matrix
     """
-    ### Creating Genotype-Vectors / Hidden-State-Vectors
+    # Creating Genotype-Vectors / Hidden-State-Vectors
     # This is a "translation" from the MATLAB-Code, from numbers to letters.
     vector_A = [["A", "A"], ["C", "C"], ["G", "G"], ["T", "T"], ["A", "C"], ["A", "G"], ["A", "T"], ["A", "-"],
                 ["C", "G"], ["C", "T"], ["C", "-"], ["G", "T"], ["G", "-"], ["T", "-"], ["-", "-"]]
@@ -415,16 +416,15 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 ["A", "C"], ["A", "T"], ["A", "-"], ["C", "T"], ["C", "-"], ["T", "-"], ["-", "-"]]
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
-    #keep in mind: vector_Gap = vectot_A
-    
-    ematrix = []  # Length: updated_reference * 30
+    # keep in mind: vector_Gap = vectot_A
 
+    ematrix = []  # Length: updated_reference * 30
 
     # This loop is for The len of reference / Run over reference.
     # For every Reference-Base: creating emission prob. for 30 states(list)
-    # 
+    #
     for i in range(len(upd_reference)):
-        
+
         # get pileup of reads
         # get pileup of quality
         # get mapq
@@ -436,14 +436,14 @@ def build_emissionmatrix(upd_sam, upd_reference):
             ematrix.append(-1)
             continue
 
-        ## Change quality score:
+        # Change quality score:
         # case: all values belong to gaps, problem: gaps do not have q-scores
         # quality-score -> mapq/4
         if all(elem == pileup_qual[0] for elem in pileup_qual) and [pileup_qual[p] == "-" for p in range(len(pileup_qual))]:
             for y in range(len(pileup_qual)):
                 pileup_qual[y] = mapq_list[y] / 4
-        
-        ## Change quality score:
+
+        # Change quality score:
         # case: somegaps are given, problem: gaps do not have q-scores!
         # missing scores: means of other scores
         elif "-" in pileup_qual:
@@ -459,7 +459,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if pileup_qual[y] == "-":
                     pileup_qual[y] = mean
 
-        ## For Sub-Loop of genotypes: ii
+        # For Sub-Loop of genotypes: ii
         # Creating genotype list: 1 to 30 (Python: 0 to 29)
         # Keep in Mind: Genotype = VectorPart = State
         temp_list = []
@@ -476,7 +476,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
             # list values else: 3 if-cases fro every element in pile-up
             for ii in range(15, 30):
 
-                ## Filter: 
+                # Filter:
                 # filter-case: if Vector at R[i] == Gap, Genotype == Gap and >80% of reads are gaps:
                 gap_counter = 0
                 for z in range(len(pileup)):
@@ -485,8 +485,8 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if vector[ii - 15] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
                     temp_list.append(0)
                     continue
-                    
-                ## Filter
+
+                # Filter
                 # NaN-Checking: in vector part ii is no match with any element from pile-up-list
                 nan_controll = 0
                 for sub in range(len(pileup)):
@@ -498,7 +498,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
                     continue
 
                 # Loop over Pile-Up
-                ## 3 possible cases: 
+                # 3 possible cases:
                 temp_value = 0
                 for subi in range(len(pileup)):
 
@@ -508,7 +508,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
                         temp_pow = np.power(10, (-pileup_qual[subi] / 10))
                         temp = np.log10(1 - temp_pow)
                         temp_value = temp_value + temp
-                    
+
                     # Case2: PileUp[subi] is not in both Elements of Vector Part
                     elif pileup[subi] != vector[ii - 15][0] and pileup[subi] != vector[ii - 15][1]:
                         #   -qscore[subi] / 10 +log10(0.25)
@@ -547,7 +547,7 @@ def build_emissionmatrix(upd_sam, upd_reference):
             for ii in range(15):
                 temp_value = 0
 
-                ## Filter: 
+                # Filter:
                 # skip loop, if len(read-pileup) is <5 or Reference-Base is a "N"
                 # append -1 as indicator for this case
                 gap_counter = 0
@@ -557,8 +557,8 @@ def build_emissionmatrix(upd_sam, upd_reference):
                 if vector[ii] == ["-", "-"] and gap_counter >= len(pileup) * 0.8:
                     temp_list.append(0)
                     continue
-                    
-                ## Filter
+
+                # Filter
                 # NaN-Checking: in vector part ii is no match with any element from pile-up-list
                 nan_controll = 0
                 for sub in range(len(pileup)):
@@ -610,17 +610,17 @@ def viterbi(emission_matrix, transmission_matrix):
     2 Parts.
     -Viterbi
     -Xtilde
-    
+
     :param emission_matrix:
     :param transmission_matrix:
     :return: xtilde (path of most likely Hidden States)
     """
 
-    ## Creating variables:
+    # Creating variables:
     # initialprob: first row of trans-matrix
     initialprob = transmission_matrix[0]
     delta = []
-    
+
     # Change NaN to -inf (np.NINF)
     for i in range(len(emission_matrix)):
         if emission_matrix[i] == -1:
@@ -629,15 +629,14 @@ def viterbi(emission_matrix, transmission_matrix):
             if emission_matrix[i][j] == "NaN":
                 emission_matrix[i][j] = np.NINF
 
-    
     ####################
     #### Run Viterbi ###
     ####################
-    
+
     # Important:  if -1 -> skip this part and.
     #             if skip because of -1: use initialprob for first next element != -1 in Ri
     for i in range(len(emission_matrix)):
-        
+
         ## Case: -1 / skip
         # append -1 as indicator for -1
         # e.g.
@@ -654,7 +653,7 @@ def viterbi(emission_matrix, transmission_matrix):
 
         ## Case: Initialization
         #   R[i] == 0 or (R[i] != -1 and R[i-1] == -1)
-        #   This starts a separately calculation 
+        #   This starts a separately calculation
         if i == 0 or (emission_matrix[i] != -1 and emission_matrix[i - 1] == -1):
             temp_list = []
             temp = 0
@@ -676,7 +675,7 @@ def viterbi(emission_matrix, transmission_matrix):
             # delta_matrix :         a temp. Matrix for calculation
             # true_delta_matrix :    a temp. Matrix for calculation
             # delta:                 saves solutions of needed calculations
-            
+
             true_delta_matrix = []
             true_temp = 0
             true_temp_list = []
@@ -741,13 +740,12 @@ def viterbi(emission_matrix, transmission_matrix):
 
             delta.append(temp_list)
 
-    
     ####################
     #### Get xtilde  ###
     ####################
     # Get Path of Hidden Satets
     # Get most likely Hidden States as a List
-    
+
     xtilde = []
     # reverse, bacuse xtilde is done backwards
     delta.reverse()
@@ -762,7 +760,7 @@ def viterbi(emission_matrix, transmission_matrix):
         if delta[i] == -1:
             xtilde.append(-1)
             continue
-            
+
         # Case: Initialization of new Sub-Part
         if (i == 0 and delta[i] != -1) or (delta[i] != -1 and delta[i + 1] == -1):
             temp = delta[i].index(np.max(delta[i]))
@@ -786,16 +784,16 @@ def viterbi(emission_matrix, transmission_matrix):
 def find_base_state(xtilde, upd_ref):
     """
     Finds the most likely genotypes / Base State at every position of updated reference.
-    
+
     e.g. at R[i] Base is G and hidden state(from xtilde) is 1: -> Base State is [G, G]
-    
+
     :param xtilde:  Hidden State of Genome Reference
     :param upd_ref: Genome Reference with Gaps
     :return: base_states
     """
     base_state = []
 
-    ### Creating Genotype-Vectors / Hidden-State-Vectors
+    # Creating Genotype-Vectors / Hidden-State-Vectors
     vector_A = [["A", "A"], ["C", "C"], ["G", "G"], ["T", "T"], ["A", "C"], ["A", "G"], ["A", "T"], ["A", "-"],
                 ["C", "G"], ["C", "T"], ["C", "-"], ["G", "T"], ["G", "-"], ["T", "-"], ["-", "-"]]
     vector_C = [["C", "C"], ["A", "A"], ["G", "G"], ["T", "T"], ["A", "C"], ["C", "G"], ["C", "T"], ["C", "-"],
@@ -805,7 +803,7 @@ def find_base_state(xtilde, upd_ref):
     vector_T = [["T", "T"], ["A", "A"], ["C", "C"], ["G", "G"], ["A", "T"], ["C", "T"], ["G", "T"], ["T", "-"],
                 ["A", "C"], ["A", "G"], ["A", "-"], ["C", "G"], ["C", "-"], ["G", "-"], ["-", "-"]]
 
-    #Keep in Mind:  Vector for Base A = Vector for Base "-"
+    # Keep in Mind:  Vector for Base A = Vector for Base "-"
     vector_A_ex = vector_A
     vector_A_ex.extend(vector_A)
 
@@ -820,8 +818,8 @@ def find_base_state(xtilde, upd_ref):
 
     # Loop over updated reference:
     for i in range(len(upd_ref)):
-        
-        # Case: xtilde(i) == -1: 
+
+        # Case: xtilde(i) == -1:
         #   skip this, base = -1
         if xtilde[i] == -1:
             base_state.append(-1)
@@ -877,7 +875,7 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
             continue
 
         elif upd_ref[i + gap_counter] == "-":
-            ### Case: Gaps Insertions in updated reference
+            # Case: Gaps Insertions in updated reference
             #       Hidden States: 16 - 29
             gap_counter = gap_counter + 1
             this_gap_number = 1
@@ -893,28 +891,30 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
 
             for ii in range(this_gap_number):
                 # Handle the gaps:
-                ### Case: multiple Insertions in a row
+                # Case: multiple Insertions in a row
                 if ii == 0:
                     if base_states[i + ii + gap_counter][0] == base_states[i + ii + gap_counter - this_gap_number][1]:
                         # e.g. 2345 A AC
 
                         variants = str(
-                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(base_states[i + ii  + gap_counter - this_gap_number][0])
+                            i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(base_states[i + ii + gap_counter - this_gap_number][0])
 
-                    elif base_states[i + ii  + gap_counter - this_gap_number][0] != base_states[i + ii  + gap_counter - this_gap_number][1] and (base_states[i + ii  + gap_counter - this_gap_number][0] != "-" and base_states[i + ii  + gap_counter - this_gap_number][1] != "-"):
+                    elif base_states[i + ii + gap_counter - this_gap_number][0] != base_states[i + ii + gap_counter - this_gap_number][1] and (base_states[i + ii + gap_counter - this_gap_number][0] != "-" and base_states[i + ii + gap_counter - this_gap_number][1] != "-"):
                         # e.g. 2345 A AC,AG
 
                         variants = str(i) + "\t" + str(ref[i - 1]) + "\t" + str(ref[i - 1]) + str(
-                            base_states[i + ii  + gap_counter - this_gap_number][0]) + "," + str(ref[i - 1]) + str(base_states[i + ii  + gap_counter - this_gap_number][1])
+                            base_states[i + ii + gap_counter - this_gap_number][0]) + "," + str(ref[i - 1]) + str(base_states[i + ii + gap_counter - this_gap_number][1])
 
-                    elif base_states[i + ii  + gap_counter - this_gap_number][0] != base_states[i + ii  + gap_counter - this_gap_number][1] and (base_states[i + ii  + gap_counter - this_gap_number][0] != "-" or base_states[i + ii  + gap_counter - this_gap_number][1] != "-"):
+                    elif base_states[i + ii + gap_counter - this_gap_number][0] != base_states[i + ii + gap_counter - this_gap_number][1] and (base_states[i + ii + gap_counter - this_gap_number][0] != "-" or base_states[i + ii + gap_counter - this_gap_number][1] != "-"):
                         # e.g. 2345 A AC,A -> only 2345 A AC
 
                         temp = ""
-                        if base_states[i + ii  + gap_counter - this_gap_number][0] != "-":
-                            temp = str(base_states[i + ii  + gap_counter - this_gap_number][0])
-                        elif base_states[i + ii  + gap_counter - this_gap_number][1] != "-":
-                            temp = str(base_states[i + ii  + gap_counter - this_gap_number][1])
+                        if base_states[i + ii + gap_counter - this_gap_number][0] != "-":
+                            temp = str(
+                                base_states[i + ii + gap_counter - this_gap_number][0])
+                        elif base_states[i + ii + gap_counter - this_gap_number][1] != "-":
+                            temp = str(
+                                base_states[i + ii + gap_counter - this_gap_number][1])
                         else:
                             print("Error here. E#778902334")
 
@@ -925,22 +925,23 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                         print(
                             "Error critical in variant output. #6546547643443")
                 else:
-                    ### Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
-                    variants = str(variants) + str(base_states[i + ii  + gap_counter - this_gap_number][0])
+                    # Case: multiple Insertions in a row: e.g. 2345 G GTTTTTT
+                    variants = str(
+                        variants) + str(base_states[i + ii + gap_counter - this_gap_number][0])
                 if ii == this_gap_number - 1:
                     variant_list.append(variants)
 
         elif upd_ref[i + gap_counter] != "-":
             ### Case: Deletion or SNP
             if xtilde[i + gap_counter] == 14:
-                ### Case: Complete Deletion / Deletion on both Strings
+                # Case: Complete Deletion / Deletion on both Strings
                 #       e.g. 2345 CG C
                 variants = str(
                     i) + "\t" + str(ref[i - 1]) + str(ref[i]) + "\t" + str(ref[i - 1])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == "-" or base_states[i + gap_counter][1] == "-":
-                ### Case: Deletion only on one String, base is conserved on other string or SNP.
+                # Case: Deletion only on one String, base is conserved on other string or SNP.
                 #       e.g. 2345 CG CA, C
                 temp = 0
                 if base_states[i + gap_counter][0] != "-":
@@ -955,14 +956,14 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == base_states[i + gap_counter][1]:
-                ### Case: SNP is equal on both strings
+                # Case: SNP is equal on both strings
                 #       e.g. 2345 A C  Genotype: [C, C]
                 variants = str(
                     i) + "\t" + str(ref[i]) + "\t" + str(base_states[i + gap_counter][0])
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] == upd_ref[i + gap_counter] or base_states[i + gap_counter][1] == upd_ref[i + gap_counter]:
-                ### Case: SNP only on one string
+                # Case: SNP only on one string
                 #     e.g. 2345 A C    Genotype: [A, C]
                 temp = 0
                 if base_states[i + gap_counter][0] != upd_ref[i + gap_counter]:
@@ -973,12 +974,12 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde):
                 variant_list.append(variants)
 
             elif base_states[i + gap_counter][0] != upd_ref[i + gap_counter] and base_states[i + gap_counter][1] != upd_ref[i + gap_counter]:
-                ### Case: 2 different SNPs
+                # Case: 2 different SNPs
                 #       e.g. 2345 A C,G
                 variants = str(i) + "\t" + str(ref[i]) + "\t" + base_states[i +
-                                                                                gap_counter][0] + "," + base_states[i + gap_counter][1]
+                                                                            gap_counter][0] + "," + base_states[i + gap_counter][1]
                 variant_list.append(variants)
-                
+
     return variant_list
 
 
@@ -1044,8 +1045,8 @@ def parser():
 
 def main():
 
-    #### Create Variables:
-    ## T-Matrix:
+    # Create Variables:
+    # T-Matrix:
     # This one is pre-transition-matrix for simulated data:
     # header:                          MATCH, SNP, Deletion,  Insertion
     pre_transition_matrix_simulated = [[0.988, 0.008, 0.002, 0.002],
@@ -1055,27 +1056,27 @@ def main():
 
     # This one is pre-transitions-matrix for real data
     # header:                       MATCH,      SNP,        Deletion,     Insertion
-    pre_transition_matrix_real =  [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
-                                   [0.9499207, 0.04640025,
-                                       0.0014855172, 0.0021934910],
-                                   [0.2879631, 0.01089283,
-                                       0.6994015911, 0.0017424552],
-                                   [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
+    pre_transition_matrix_real = [[0.9838043, 0.01474720, 0.0006085089, 0.0008400445],
+                                  [0.9499207, 0.04640025,
+                                   0.0014855172, 0.0021934910],
+                                  [0.2879631, 0.01089283,
+                                   0.6994015911, 0.0017424552],
+                                  [0.4163771, 0.01984721, 0.0040161923, 0.5597594535]]
 
-    ## Heterozygous Rate
+    # Heterozygous Rate
     # For simulated data:
     hetrate_simulated = 0.01
     # For real data
     hetrate_real = 0.001
 
-    #### Get Data
+    # Get Data
     args = parser()
     sam = get_sam(args.reads)
     # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
     ref_seq = get_ref_fasta(args.input)
     # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
-    #### Get Updated Data
+    # Get Updated Data
     newsam, insertions = get_cigar(sam)
     unique_inserts = del_duplicate_ins(insertions)
     upd_inserts = update_insertions(unique_inserts)
@@ -1083,15 +1084,14 @@ def main():
     updated_sam = update_reads(upd_sam, upd_inserts)
     updated_refseq = update_ref(ref_seq, upd_inserts)
 
-
-    #### Viterbi
+    # Viterbi
     trans_matrix = create_transition_matrix(
         pre_transition_matrix_simulated, hetrate_simulated)
     emission_matrix = build_emissionmatrix(updated_sam, updated_refseq)
     xtilde = viterbi(emission_matrix, trans_matrix)
     hidden_states = find_base_state(xtilde, updated_refseq)
 
-    #### Varient Output
+    # Varient Output
     output = create_variant_calling_output(
         ref_seq, updated_refseq, hidden_states, xtilde)
     create_output_file(output, args.output)
