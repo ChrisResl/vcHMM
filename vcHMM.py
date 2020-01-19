@@ -992,6 +992,8 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     """
     final_reads = []
+    reads = list(reads)
+    updated_reads = list(updated_reads)
 
     len_reads = len(reads)
     i = 0
@@ -999,7 +1001,7 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
     while i < len_reads:
         memory_i = ""
         #print(reads[i])
-        start_pos = reads[i][0]
+        start_pos = int(reads[i][0])
         read_name = reads[i][1]
         read_cigar = reads[i][3]
         mapq = reads[i][4]
@@ -1014,7 +1016,8 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
             del updated_reads[i]
             del reads[i]
             len_reads = len_reads - 1
-            i = i  + 1
+            i = i + 1
+
             continue
         memory_i = (start_pos_new_index + len(read_seq)) * 2
         ref_part = upd_ref[start_pos_new_index:memory_i]
