@@ -938,7 +938,7 @@ def x_read(ref, reads):
     upd_ref = ""
     new_reads = []
 
-    uni_insertions, updated_reads = get_uni_insertions_and_update_reads(reads)
+    uni_insertions, updated_reads, reads = get_uni_insertions_and_update_reads(reads)
     upd_ref, upd_ref_index = update_ref(ref, uni_insertions)
     final_reads = update_reads(upd_ref, upd_ref_index, updated_reads, reads)
 
@@ -1114,7 +1114,7 @@ def get_uni_insertions_and_update_reads(reads):
 
     uni_insert_set = list(dict.fromkeys(uni_insert))
     #print(uni_insert_set)
-    return uni_insert_set, updated_reads
+    return uni_insert_set, updated_reads, reads
 
 
 def get_ref_index_dict(ref, ref_index):
