@@ -999,6 +999,7 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
     i = 0
 
     while i < len_reads:
+        len_reads = len_reads 
         memory_i = ""
         #print(reads[i])
         start_pos = int(reads[i][0])
