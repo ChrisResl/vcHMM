@@ -999,11 +999,12 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     for read in reads:
         memory_i = ""
-        start_pos = reads[0]
-        read_name = reads[1]
-        read_cigar = reads[3]
-        mapq = reads[4]
-
+        start_pos = read[0]
+        read_name = read[1]
+        read_cigar = read[3]
+        if read_cigar is None:
+            continue
+        mapq = read[4]
         read_seq = updated_reads[0]
         read_qual = updated_reads[1]
 
@@ -1084,20 +1085,19 @@ def get_uni_insertions_and_update_reads(reads):
     updated_reads = []
     len_reads = len(reads)
     i = 0
-    while i < len_reads:
+    for read in reads:
         # cigar => element[3]
         #print(read)
-        start_pos = reads[i][0]
-        read_name = reads[i][1]
-        read_cigar = reads[i][3]
+        start_pos = read[0]
+        read_name = read[1]
+        read_cigar = read[3]
 
-        if read_cigar == None:
-            i = i + 1
+        if read_cigar is None:
             continue
 
-        mapq = reads[i][4]
-        read_seq = reads[i][2]
-        read_qual = reads[i][5]
+        mapq = read[4]
+        read_seq = read[2]
+        read_qual = read[5]
 
         current_read_position = start_pos
         current_ref_position = start_pos
@@ -1153,7 +1153,7 @@ def get_uni_insertions_and_update_reads(reads):
                     uni_insert.append((ref_gap_location, insertions_len))
                     kaskade_check = 0
                     insertions_len = 0
-        i = i + 1
+
         updated_reads.append([read_seq, read_qual])
 
     print("while loop in uni_inerts done")
