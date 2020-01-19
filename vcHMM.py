@@ -874,19 +874,15 @@ def create_variant_calling_output(ref, upd_ref, base_states, xtilde, original_in
     return variant_list
 
 
-def create_output_file(values):
-    """
-    Creates a VCF-File.
-    Name is for sim. Data, change it for other Data.
-    """
-    # Add name-column to list
+def create_output_file(values, file):
+    # add name-column to list
     new_values = []
     for element in values:
         print(element)
         temp = "simref\t" + element
         new_values.append(temp)
 
-    # Add id-column
+    # add id-column
     new_values2 = []
     id_column_value = "\t.\t"
     needle = "\t"
@@ -897,10 +893,10 @@ def create_output_file(values):
             start = new_values[i].find(needle, start + len(needle))
             n -= 1
         temp = new_values[i][0:start] + id_column_value + \
-               new_values[i][start + 1:len(new_values[i])]
+            new_values[i][start + 1:len(new_values[i])]
         new_values2.append(temp)
 
-    # Add Headlines and infos
+    # add header
     head_list = []
     meta_info = "##fileformat=VCFv4.0"
     head_list.append(meta_info)
@@ -910,8 +906,8 @@ def create_output_file(values):
 
     head_list.extend(new_values2)
 
-    # Create file
-    with open("new_alignment_test.txt", 'w') as output:
+    # w file
+    with open(file, 'w') as output:
         for element in head_list:
             output.write(str(element) + '\n')
 
@@ -1180,11 +1176,12 @@ def main():
     # For real data
     hetrate_real = 0.001
 
-    #### Get Data
-    #args = parser()
-    sam = get_sam("example _ original.sam")
+
+    ### Get data
+    args = parser()
+    sam = get_sam(args.reads)
     # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
-    ref_seq = get_ref_fasta("ref.fa")
+    ref_seq = get_ref_fasta(args.input)
     # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
 
     upd_ref, upd_reads, upd_ref_index = x_read(ref_seq, sam)
@@ -1206,10 +1203,8 @@ def main():
     #### Varient Output
     output = create_variant_calling_output(
         ref_seq, upd_ref, hidden_states, xtilde, upd_ref_index)
-    create_output_file(output)#, args.output)
-#
-    #print(len(output))
+    create_output_file(output, args.output)
 
-#if __name__ == '__main__':
 
-main()
+if __name__ == '__main__':
+    main()
