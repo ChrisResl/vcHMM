@@ -1023,11 +1023,11 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         for element in read_cigar:
             cls = cls + str(element[0]) * element[1]
 
-        for cigar in cls:
-            if (cigar == "0" or cigar == "-") and ref_part[cls.index(cigar)] == "-":
-                read_seq = read_seq[0:] + "-" + read_seq[:len(read_seq)]
-                read_qual = read_qual[0:] + ["-"] + read_qual[:len(read_qual)]
-                cls = cls[0:] + "-" + cls[:len(cls)]
+        for i, cigar in enumerate(cls):
+            if (cigar == "0" or cigar == "-") and ref_part[i] == "-":
+                read_seq = read_seq[:i] + "-" + read_seq[i:]
+                read_qual = read_qual[:i] + ["-"] + read_qual[i:]
+                cls = cls[:i] + "-" + cls[i:]
                 #print("si")
 
             # if (cls[u] == "0" or cls[u] == "2") and ref_part[u] != "-":
