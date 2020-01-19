@@ -28,7 +28,10 @@ def get_sam(samfile):
     for read in samfile:
         sam.append([read.reference_start, read.query_name, read.query_sequence,
                     read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
-        sam.sort()
+    for i, read in enumerate(sam):
+        if read[3] is None:
+            del sam[i]
+    sam.sort()
     return sam
 
 
@@ -940,6 +943,8 @@ def x_read(ref, reads):
     reads = s_and_h_in_cigar(reads)
 
     uni_insertions, updated_reads, reads = get_uni_insertions_and_update_reads(reads)
+    print(len(updated_reads))
+    print(len(reads))
     upd_ref, upd_ref_index = update_ref(ref, uni_insertions)
     final_reads = update_reads(upd_ref, upd_ref_index, updated_reads, reads)
 
@@ -957,31 +962,28 @@ def s_and_h_in_cigar(sam):
         gaps_before = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
-        if read[3] is None:
-            continue
-        else:
-            for operation in read[3]:
+        for operation in read[3]:
 
                 # soft and hard clipping only at beginning and end
-                if operation[0] == 4:
-                    # Soft clipped, delete sequence from read and from cigar string
-                    if soft_at_beginning:
-                        soft_at_beginning = False
-                        read = [read[0] + operation[1], read[1],
-                                read[2][operation[1]:], read[3][1:], read[4], read[5]]
-                    else:
-                        read = [read[0], read[1],
-                                read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
+            if operation[0] == 4:
+                # Soft clipped, delete sequence from read and from cigar string
+                if soft_at_beginning:
+                    soft_at_beginning = False
+                    read = [read[0] + operation[1], read[1],
+                            read[2][operation[1]:], read[3][1:], read[4], read[5]]
+                else:
+                    read = [read[0], read[1],
+                            read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
 
-                elif operation[0] == 5:
-                    # Hard clipped, delete tuple from cigar string
-                    if hard_at_beginning:
-                        hard_at_beginning = False
-                        read = [read[0], read[1], read[2],
-                                read[3][1:], read[4], read[5]]
-                    else:
-                        read = [read[0], read[1], read[2],
-                                read[3][:-1], read[4], read[5]]
+            elif operation[0] == 5:
+                # Hard clipped, delete tuple from cigar string
+                if hard_at_beginning:
+                    hard_at_beginning = False
+                    read = [read[0], read[1], read[2],
+                            read[3][1:], read[4], read[5]]
+                else:
+                    read = [read[0], read[1], read[2],
+                            read[3][:-1], read[4], read[5]]
     return sam
 
 
@@ -991,22 +993,20 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     """
     final_reads = []
-    reads = reads
-    updated_reads = updated_reads
 
     # len_reads = len(reads)
     # i = 0
 
-    for read in reads:
+    for i in range(len(reads)):
         memory_i = ""
-        start_pos = read[0]
-        read_name = read[1]
-        read_cigar = read[3]
-        if read_cigar is None:
-            continue
-        mapq = read[4]
-        read_seq = updated_reads[reads.index(read)][0]
-        read_qual = updated_reads[reads.index(read)][1]
+        start_pos = reads[i][0]
+        read_name = reads[i][1]
+        read_cigar = reads[i][3]
+#        if read_cigar is None:
+#            continue
+        mapq = reads[i][4]
+        read_seq = updated_reads[i][0]
+        read_qual = updated_reads[i][1]
 
         try:
             start_pos_new_index = upd_new_index.index(start_pos)
@@ -1083,8 +1083,8 @@ def get_uni_insertions_and_update_reads(reads):
     """
     uni_insert = []
     updated_reads = []
-    len_reads = len(reads)
-    i = 0
+    # len_reads = len(reads)
+    # i = 0
     for read in reads:
         # cigar => element[3]
         #print(read)
@@ -1092,8 +1092,9 @@ def get_uni_insertions_and_update_reads(reads):
         read_name = read[1]
         read_cigar = read[3]
 
-        if read_cigar is None:
-            continue
+#        if read_cigar is None:
+#            reads.remove(read) 
+#            continue
 
         mapq = read[4]
         read_seq = read[2]
