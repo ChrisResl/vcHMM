@@ -992,11 +992,16 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     """
     final_reads = []
+    reads = list(reads)
+    updated_reads = list(updated_reads)
 
-    for i in range(len(reads)):
+    len_reads = len(reads)
+    i = 0
+
+    while i < len_reads:
         memory_i = ""
         #print(reads[i])
-        start_pos = reads[i][0]
+        start_pos = int(reads[i][0])
         read_name = reads[i][1]
         read_cigar = reads[i][3]
         mapq = reads[i][4]
@@ -1004,8 +1009,16 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         read_seq = updated_reads[i][0]
         read_qual = updated_reads[i][1]
 
+        try:
+            start_pos_new_index = upd_new_index.index(start_pos)
+        except ValueError:
 
-        start_pos_new_index = upd_new_index.index(start_pos)
+            del updated_reads[i]
+            del reads[i]
+            len_reads = len_reads - 1
+            i = i + 1
+
+            continue
         memory_i = (start_pos_new_index + len(read_seq)) * 2
         ref_part = upd_ref[start_pos_new_index:memory_i]
 
@@ -1043,7 +1056,9 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         temp.append(mapq)
         temp.append(read_qual)
         final_reads.append(temp)
+        i = i + 1
 
+        len_reads = len(reads) 
     return final_reads
 
 
@@ -1055,7 +1070,7 @@ def update_ref(ref, uni_inse):
 
     for element in uni_inse:
         true_position = ref_index.index(element[0])
-        # This is not enougth:
+        #:
         ref = ref[0:true_position] + element[1] * "-" + ref[true_position:len(ref)]
         for i in range(element[1]):
             #ref_index = ref_index[0:true_position] + [element[0]] + ref[true_position:len(ref)]
