@@ -933,10 +933,12 @@ def parser():
 def x_read(ref, reads):
 
     ##############################################################################################################
-    #####
+    ##### Update Reads and References
     ##############################################################################################################
     upd_ref = ""
     new_reads = []
+
+    reads = s_and_h_in_cigar(reads)
 
     uni_insertions, updated_reads, reads = get_uni_insertions_and_update_reads(reads)
     upd_ref, upd_ref_index = update_ref(ref, uni_insertions)
@@ -945,6 +947,43 @@ def x_read(ref, reads):
     final_reads = tuple(final_reads)
 
     return upd_ref, final_reads, upd_ref_index
+
+
+def s_and_h_in_cigar(sam):
+    for read in sam:
+        soft_at_beginning = True
+        hard_at_beginning = True
+        same_read = True
+        nr_insertions = 0
+        gaps_before = 0
+        pos = 0
+        # read[3] is cigarstring (operation, length)
+        if read[3] is None:
+            continue
+        else:
+            for operation in read[3]:
+
+                # soft and hard clipping only at beginning and end
+                if operation[0] == 4:
+                    # Soft clipped, delete sequence from read and from cigar string
+                    if soft_at_beginning:
+                        soft_at_beginning = False
+                        read = [read[0] + operation[1], read[1],
+                                read[2][operation[1]:], read[3][1:], read[4], read[5]]
+                    else:
+                        read = [read[0], read[1],
+                                read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
+
+                elif operation[0] == 5:
+                    # Hard clipped, delete tuple from cigar string
+                    if hard_at_beginning:
+                        hard_at_beginning = False
+                        read = [read[0], read[1], read[2],
+                                read[3][1:], read[4], read[5]]
+                    else:
+                        read = [read[0], read[1], read[2],
+                                read[3][:-1], read[4], read[5]]
+    return sam
 
 
 def update_reads(upd_ref, upd_new_index, updated_reads, reads):
