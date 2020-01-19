@@ -993,7 +993,10 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
     """
     final_reads = []
 
-    for i in range(len(reads)):
+    len_reads = len(reads)
+    i = 0
+
+    while i < len_reads:
         memory_i = ""
         #print(reads[i])
         start_pos = reads[i][0]
@@ -1007,6 +1010,11 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         try:
             start_pos_new_index = upd_new_index.index(start_pos)
         except ValueError:
+
+            del updated_reads[i]
+            del reads[i]
+            len_reads = len_reads - 1
+            i = i  + 1
             continue
         memory_i = (start_pos_new_index + len(read_seq)) * 2
         ref_part = upd_ref[start_pos_new_index:memory_i]
@@ -1045,6 +1053,7 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         temp.append(mapq)
         temp.append(read_qual)
         final_reads.append(temp)
+        i = i + 1
 
     return final_reads
 
