@@ -1042,10 +1042,14 @@ def get_uni_insertions_and_update_reads(reads):
         start_pos = reads[i][0]
         read_name = reads[i][1]
         read_cigar = reads[i][3]
+
+        if read_cigar == None:
+            del reads[i]
+            continue
+
         mapq = reads[i][4]
         read_seq = reads[i][2]
         read_qual = reads[i][5]
-
 
         current_read_position = start_pos
         current_ref_position = start_pos
