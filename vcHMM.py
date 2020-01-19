@@ -1036,7 +1036,9 @@ def get_uni_insertions_and_update_reads(reads):
     """
     uni_insert = []
     updated_reads = []
-    for i in range(len(reads)):
+    len_reads = len(reads)
+    i = 0
+    while i < len_reads:
         # cigar => element[3]
         #print(read)
         start_pos = reads[i][0]
@@ -1045,6 +1047,7 @@ def get_uni_insertions_and_update_reads(reads):
 
         if read_cigar == None:
             del reads[i]
+            i = i + 1
             continue
 
         mapq = reads[i][4]
@@ -1105,7 +1108,7 @@ def get_uni_insertions_and_update_reads(reads):
                     uni_insert.append((ref_gap_location, insertions_len))
                     kaskade_check = 0
                     insertions_len = 0
-
+        i = i + 1
         updated_reads.append([read_seq, read_qual])
 
     uni_insert_set = list(dict.fromkeys(uni_insert))
