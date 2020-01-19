@@ -1004,8 +1004,10 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         read_seq = updated_reads[i][0]
         read_qual = updated_reads[i][1]
 
-
-        start_pos_new_index = upd_new_index.index(start_pos)
+        try:
+            start_pos_new_index = upd_new_index.index(start_pos)
+        except ValueError:
+            continue
         memory_i = (start_pos_new_index + len(read_seq)) * 2
         ref_part = upd_ref[start_pos_new_index:memory_i]
 
@@ -1055,7 +1057,7 @@ def update_ref(ref, uni_inse):
 
     for element in uni_inse:
         true_position = ref_index.index(element[0])
-        # This is not enougth:
+        #:
         ref = ref[0:true_position] + element[1] * "-" + ref[true_position:len(ref)]
         for i in range(element[1]):
             #ref_index = ref_index[0:true_position] + [element[0]] + ref[true_position:len(ref)]
