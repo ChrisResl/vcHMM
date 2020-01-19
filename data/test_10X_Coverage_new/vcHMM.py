@@ -997,16 +997,16 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
     # len_reads = len(reads)
     # i = 0
 
-    for read in reads:
+    for i in range(len(reads)):
         memory_i = ""
-        start_pos = read[0]
-        read_name = read[1]
-        read_cigar = read[3]
+        start_pos = reads[i][0]
+        read_name = reads[i][1]
+        read_cigar = reads[i][3]
         if read_cigar is None:
             continue
-        mapq = read[4]
-        read_seq = updated_reads[reads.index(read)][0]
-        read_qual = updated_reads[reads.index(read)][1]
+        mapq = reads[i][4]
+        read_seq = updated_reads[i][0]
+        read_qual = updated_reads[i][1]
 
         try:
             start_pos_new_index = upd_new_index.index(start_pos)
@@ -1083,8 +1083,8 @@ def get_uni_insertions_and_update_reads(reads):
     """
     uni_insert = []
     updated_reads = []
-    len_reads = len(reads)
-    i = 0
+    # len_reads = len(reads)
+    # i = 0
     for read in reads:
         # cigar => element[3]
         #print(read)
