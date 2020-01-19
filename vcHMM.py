@@ -1047,6 +1047,7 @@ def get_uni_insertions_and_update_reads(reads):
 
         if read_cigar == None:
             del reads[i]
+            len_reads = len_reads - 1
             i = i + 1
             continue
 
