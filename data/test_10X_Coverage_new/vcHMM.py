@@ -991,8 +991,8 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     """
     final_reads = []
-    reads = list(reads)
-    updated_reads = list(updated_reads)
+    reads = reads
+    updated_reads = updated_reads
 
     # len_reads = len(reads)
     # i = 0
@@ -1005,8 +1005,8 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         if read_cigar is None:
             continue
         mapq = read[4]
-        read_seq = updated_reads[0]
-        read_qual = updated_reads[1]
+        read_seq = updated_reads[reads.index(read)][0]
+        read_qual = updated_reads[reads.index(read)][1]
 
         try:
             start_pos_new_index = upd_new_index.index(start_pos)
