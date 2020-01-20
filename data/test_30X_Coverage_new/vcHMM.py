@@ -26,9 +26,13 @@ def get_sam(samfile):
     samfile = pysam.AlignmentFile(samfile, "rb")
     sam = []
     for read in samfile:
-        sam.append([read.reference_start, read.query_name, read.query_sequence,
-                    read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
-        sam.sort()
+        if read.cigartuples is None:
+            continue
+        else:
+            sam.append([read.reference_start, read.query_name, read.query_sequence,
+                        read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
+
+    sam.sort()
     return sam
 
 
@@ -940,6 +944,8 @@ def x_read(ref, reads):
     reads = s_and_h_in_cigar(reads)
 
     uni_insertions, updated_reads, reads = get_uni_insertions_and_update_reads(reads)
+    print(len(updated_reads))
+    print(len(reads))
     upd_ref, upd_ref_index = update_ref(ref, uni_insertions)
     final_reads = update_reads(upd_ref, upd_ref_index, updated_reads, reads)
 
@@ -957,31 +963,28 @@ def s_and_h_in_cigar(sam):
         gaps_before = 0
         pos = 0
         # read[3] is cigarstring (operation, length)
-        if read[3] is None:
-            continue
-        else:
-            for operation in read[3]:
+        for operation in read[3]:
 
                 # soft and hard clipping only at beginning and end
-                if operation[0] == 4:
-                    # Soft clipped, delete sequence from read and from cigar string
-                    if soft_at_beginning:
-                        soft_at_beginning = False
-                        read = [read[0] + operation[1], read[1],
-                                read[2][operation[1]:], read[3][1:], read[4], read[5]]
-                    else:
-                        read = [read[0], read[1],
-                                read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
+            if operation[0] == 4:
+                # Soft clipped, delete sequence from read and from cigar string
+                if soft_at_beginning:
+                    soft_at_beginning = False
+                    read = [read[0] + operation[1], read[1],
+                            read[2][operation[1]:], read[3][1:], read[4], read[5]]
+                else:
+                    read = [read[0], read[1],
+                            read[2][:-(operation[1])], read[3][:-1], read[4], read[5]]
 
-                elif operation[0] == 5:
-                    # Hard clipped, delete tuple from cigar string
-                    if hard_at_beginning:
-                        hard_at_beginning = False
-                        read = [read[0], read[1], read[2],
-                                read[3][1:], read[4], read[5]]
-                    else:
-                        read = [read[0], read[1], read[2],
-                                read[3][:-1], read[4], read[5]]
+            elif operation[0] == 5:
+                # Hard clipped, delete tuple from cigar string
+                if hard_at_beginning:
+                    hard_at_beginning = False
+                    read = [read[0], read[1], read[2],
+                            read[3][1:], read[4], read[5]]
+                else:
+                    read = [read[0], read[1], read[2],
+                            read[3][:-1], read[4], read[5]]
     return sam
 
 
@@ -991,29 +994,24 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
 
     """
     final_reads = []
-    reads = list(reads)
-    updated_reads = list(updated_reads)
 
-    len_reads = len(reads)
-    i = 0
+    # len_reads = len(reads)
+    # i = 0
 
-    while i < len_reads:
+    for i in range(len(reads)):
         memory_i = ""
-        print(i)
-        print(len(updated_reads))
-        print(len_reads)
-        start_pos = int(reads[i][0])
+        start_pos = reads[i][0]
         read_name = reads[i][1]
         read_cigar = reads[i][3]
+#        if read_cigar is None:
+#            continue
         mapq = reads[i][4]
-
         read_seq = updated_reads[i][0]
         read_qual = updated_reads[i][1]
 
         try:
             start_pos_new_index = upd_new_index.index(start_pos)
         except ValueError:
-            i = i + 1
             continue
         memory_i = (start_pos_new_index + len(read_seq)) * 2
         ref_part = upd_ref[start_pos_new_index:memory_i]
@@ -1026,11 +1024,11 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         for element in read_cigar:
             cls = cls + str(element[0]) * element[1]
 
-        for u in range(len(cls)):
-            if (cls[u] == "0" or cls[u] == "-") and ref_part[u] == "-":
-                read_seq = read_seq[0:u] + "-" + read_seq[u:len(read_seq)]
-                read_qual = read_qual[0:u] + ["-"] + read_qual[u:len(read_qual)]
-                cls = cls[0:u] + "-" + cls[u:len(cls)]
+        for i, cigar in enumerate(cls):
+            if (cigar == "0" or cigar == "-") and ref_part[i] == "-":
+                read_seq = read_seq[:i] + "-" + read_seq[i:]
+                read_qual = read_qual[:i] + ["-"] + read_qual[i:]
+                cls = cls[:i] + "-" + cls[i:]
                 #print("si")
 
             # if (cls[u] == "0" or cls[u] == "2") and ref_part[u] != "-":
@@ -1052,10 +1050,10 @@ def update_reads(upd_ref, upd_new_index, updated_reads, reads):
         temp.append(mapq)
         temp.append(read_qual)
         final_reads.append(temp)
-        i = i + 1
 
-        len_reads = len(reads) 
+    print("update reads while loop done")
     return final_reads
+
 
 
 def update_ref(ref, uni_inse):
@@ -1086,21 +1084,22 @@ def get_uni_insertions_and_update_reads(reads):
     """
     uni_insert = []
     updated_reads = []
-    len_reads = len(reads)
-    i = 0
-    while i < len_reads:
+    # len_reads = len(reads)
+    # i = 0
+    for read in reads:
         # cigar => element[3]
         #print(read)
-        start_pos = reads[i][0]
-        read_name = reads[i][1]
-        read_cigar = reads[i][3]
+        start_pos = read[0]
+        read_name = read[1]
+        read_cigar = read[3]
 
-        if read_cigar == None:
-            continue
+#        if read_cigar is None:
+#            reads.remove(read) 
+#            continue
 
-        mapq = reads[i][4]
-        read_seq = reads[i][2]
-        read_qual = reads[i][5]
+        mapq = read[4]
+        read_seq = read[2]
+        read_qual = read[5]
 
         current_read_position = start_pos
         current_ref_position = start_pos
@@ -1156,9 +1155,10 @@ def get_uni_insertions_and_update_reads(reads):
                     uni_insert.append((ref_gap_location, insertions_len))
                     kaskade_check = 0
                     insertions_len = 0
-        i = i + 1
+
         updated_reads.append([read_seq, read_qual])
 
+    print("while loop in uni_inerts done")
     uni_insert_set = list(dict.fromkeys(uni_insert))
     #print(uni_insert_set)
     return uni_insert_set, updated_reads, reads
@@ -1238,9 +1238,9 @@ def main():
     # sam = get_sam('data/test_10X_Coverage/read_sort.sam')
     ref_seq = get_ref_fasta(args.input)
     # ref_seq = get_ref_fasta('data/test_10X_Coverage/ref.fa')
-
+    print("read sam and ref")
     upd_ref, upd_reads, upd_ref_index = x_read(ref_seq, sam)
-
+    print("updated ref and reads")
     ### Testing Pile-Up
     #ref_index_dict = get_ref_index_dict(upd_ref, upd_ref_index)
     #for i in range(2260, 3368):
@@ -1254,12 +1254,13 @@ def main():
     emission_matrix = build_emissionmatrix(upd_reads, upd_ref, upd_ref_index)
     xtilde = viterbi(emission_matrix, trans_matrix)
     hidden_states = find_base_state(xtilde, upd_ref)
+    print("viterbi done")
 
     #### Varient Output
     output = create_variant_calling_output(
         ref_seq, upd_ref, hidden_states, xtilde, upd_ref_index)
     create_output_file(output, args.output)
-
+    print("created output vcf")
 
 if __name__ == '__main__':
     main()

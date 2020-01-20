@@ -26,11 +26,12 @@ def get_sam(samfile):
     samfile = pysam.AlignmentFile(samfile, "rb")
     sam = []
     for read in samfile:
-        sam.append([read.reference_start, read.query_name, read.query_sequence,
-                    read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
-    for i, read in enumerate(sam):
-        if read[3] is None:
-            del sam[i]
+        if read.cigartuples is None:
+            continue
+        else:
+            sam.append([read.reference_start, read.query_name, read.query_sequence,
+                        read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
+
     sam.sort()
     return sam
 
