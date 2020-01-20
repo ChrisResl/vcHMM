@@ -30,6 +30,8 @@ def get_sam(samfile):
                     read.cigartuples, read.mapping_quality, read.query_qualities.tolist()])
     for i, read in enumerate(sam):
         if read[3] is None:
+            print(i)
+            print(sam[i])
             del sam[i]
     sam.sort()
     return sam
